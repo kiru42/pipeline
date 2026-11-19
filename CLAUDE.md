@@ -10,7 +10,7 @@ Lis INTENT.md avant tout travail.
 
 Outil personnel de suivi commercial (prospects, étapes du pipeline, relances du jour). Mono-utilisateur, sans authentification. La spécification produit et les critères d'acceptation sont dans `INTENT.md`.
 
-État actuel : squelette `create-next-app` + shadcn. Ni base de données, ni couche métier, ni runner de tests ne sont encore en place.
+État actuel : squelette `create-next-app` + shadcn, structure 3 couches avec un module `example` vide, Vitest en place. Aucune base de données ni fonctionnalité métier.
 
 ## Commandes
 
@@ -23,14 +23,25 @@ pnpm lint     # ESLint 9 flat config (eslint-config-next core-web-vitals + types
 pnpm shadcn add <composant>   # ajoute un composant dans src/components/ui
 ```
 
-Aucun script de test pour l'instant : en ajouter un (et documenter ici la commande pour lancer un test unique) lors de l'introduction de la couche métier.
+Tests (Vitest, fichiers `*.test.ts(x)` colocalisés sous `src/`) :
+
+```bash
+pnpm test                                        # exécution unique
+pnpm test:watch                                  # mode watch
+pnpm test src/services/example.service.test.ts   # un seul fichier
+pnpm test -t "<nom du test>"                     # un seul test par nom
+```
+
+Environnement par défaut `node` ; un test de composant déclare `// @vitest-environment jsdom` en première ligne.
 
 ## Architecture visée (INTENT.md)
 
-Trois couches strictement séparées :
-- **Interface** : `src/app` (App Router) + composants shadcn.
-- **Logique métier** : pure, couverte par des tests unitaires.
-- **Accès aux données** : seule couche autorisée à toucher la base. Base légère (non encore choisie) pour pouvoir migrer vers Turso en ne modifiant que cette couche.
+Trois couches strictement séparées, dépendances dans un seul sens : présentation → services → données.
+- **Présentation** : `src/app` (App Router) + `src/components` (shadcn). N'importe jamais `src/data` (règle `no-restricted-imports` dans `eslint.config.mjs`) ; les types nécessaires sont réexportés par `src/services`.
+- **Services (logique métier)** : `src/services`, pure, repository injecté en paramètre (`createXService(repository)`), couverte par des tests unitaires avec un faux repository.
+- **Données** : `src/data`, seule couche autorisée à toucher la base. Base légère (non encore choisie) pour pouvoir migrer vers Turso en ne modifiant que cette couche.
+
+Le module `example` dans chaque couche est un gabarit vide à dupliquer.
 
 Déploiement : Vercel.
 
