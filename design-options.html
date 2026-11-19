@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pipeline · Design systems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ───────────── Page (neutre) ───────────── */
+:root {
+  --page-bg: oklch(0.955 0 0);
+  --page-fg: oklch(0.2 0 0);
+  --page-muted: oklch(0.5 0 0);
+  --page-line: oklch(0.88 0 0);
+  color-scheme: light;
+}
+:root.dark {
+  --page-bg: oklch(0.11 0 0);
+  --page-fg: oklch(0.95 0 0);
+  --page-muted: oklch(0.65 0 0);
+  --page-line: oklch(0.25 0 0);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; }
+body {
+  background: var(--page-bg);
+  color: var(--page-fg);
+  font: 14px/1.5 system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.page-head {
+  display: flex; flex-wrap: wrap; gap: 16px; align-items: end; justify-content: space-between;
+  padding: 28px 24px 20px; max-width: 1480px; margin: 0 auto;
+}
+.page-head h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.page-head p { color: var(--page-muted); max-width: 70ch; }
+.mode-toggle {
+  font: inherit; font-weight: 500; cursor: pointer;
+  padding: 7px 14px; border-radius: 999px;
+  border: 1px solid var(--page-line); background: transparent; color: var(--page-fg);
+}
+.systems {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(3, minmax(340px, 1fr));
+  padding: 0 24px 40px; max-width: 1480px; margin: 0 auto;
+}
+@media (max-width: 1100px) {
+  .systems { grid-template-columns: 1fr; max-width: 560px; padding: 0 16px 32px; }
+  .page-head { padding: 24px 16px 16px; }
+}
+
+/* ───────────── Système A · Ardoise ───────────── */
+.ds-a {
+  --background: oklch(0.985 0.003 265);
+  --foreground: oklch(0.21 0.02 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.02 265);
+  --primary: oklch(0.51 0.2 275);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 0.015 275);
+  --secondary-foreground: oklch(0.36 0.12 275);
+  --muted: oklch(0.96 0.005 265);
+  --muted-foreground: oklch(0.52 0.02 265);
+  --accent: oklch(0.96 0.005 265);
+  --accent-foreground: oklch(0.21 0.02 265);
+  --destructive: oklch(0.58 0.22 25);
+  --border: oklch(0.915 0.008 265);
+  --input: oklch(0.88 0.01 265);
+  --ring: oklch(0.51 0.2 275);
+  --highlight: oklch(0.95 0.07 85);
+  --highlight-foreground: oklch(0.43 0.1 65);
+  --radius: 0.375rem;
+
+  --font-heading: "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --heading-weight: 600;
+  --heading-tracking: -0.02em;
+  --body-size: 14px;
+  --card-shadow: 0 1px 2px oklch(0.2 0.02 265 / 0.06);
+  --avatar-radius: var(--radius);
+  --badge-radius: 4px;
+  --badge-bg-l: 0.95; --badge-bg-c: 0.035;
+  --badge-fg-l: 0.45; --badge-fg-c: 0.13;
+}
+.dark .ds-a {
+  --background: oklch(0.165 0.012 265);
+  --foreground: oklch(0.955 0.005 265);
+  --card: oklch(0.205 0.014 265);
+  --card-foreground: oklch(0.955 0.005 265);
+  --primary: oklch(0.67 0.16 275);
+  --primary-foreground: oklch(0.16 0.03 275);
+  --secondary: oklch(0.28 0.05 275);
+  --secondary-foreground: oklch(0.9 0.04 275);
+  --muted: oklch(0.25 0.014 265);
+  --muted-foreground: oklch(0.7 0.02 265);
+  --accent: oklch(0.25 0.014 265);
+  --accent-foreground: oklch(0.955 0.005 265);
+  --destructive: oklch(0.7 0.19 22);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.67 0.16 275);
+  --highlight: oklch(0.32 0.07 75);
+  --highlight-foreground: oklch(0.88 0.12 85);
+  --card-shadow: none;
+  --badge-bg-l: 0.3; --badge-bg-c: 0.06;
+  --badge-fg-l: 0.85; --badge-fg-c: 0.1;
+}
+
+/* ───────────── Système B · Papier ───────────── */
+.ds-b {
+  --background: oklch(0.972 0.012 85);
+  --foreground: oklch(0.25 0.02 55);
+  --card: oklch(0.993 0.005 85);
+  --card-foreground: oklch(0.25 0.02 55);
+  --primary: oklch(0.44 0.08 155);
+  --primary-foreground: oklch(0.98 0.01 85);
+  --secondary: oklch(0.93 0.025 80);
+  --secondary-foreground: oklch(0.33 0.04 55);
+  --muted: oklch(0.945 0.016 80);
+  --muted-foreground: oklch(0.5 0.025 60);
+  --accent: oklch(0.945 0.016 80);
+  --accent-foreground: oklch(0.25 0.02 55);
+  --destructive: oklch(0.52 0.19 25);
+  --border: oklch(0.895 0.02 80);
+  --input: oklch(0.86 0.025 75);
+  --ring: oklch(0.44 0.08 155);
+  --highlight: oklch(0.93 0.05 45);
+  --highlight-foreground: oklch(0.47 0.14 38);
+  --radius: 0.75rem;
+
+  --font-heading: "Fraunces", serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "DM Mono", monospace;
+  --heading-weight: 600;
+  --heading-tracking: -0.01em;
+  --body-size: 15px;
+  --card-shadow: 0 1px 0 oklch(0.85 0.02 80), 0 12px 28px -16px oklch(0.35 0.05 55 / 0.25);
+  --avatar-radius: 999px;
+  --badge-radius: 999px;
+  --badge-bg-l: 0.93; --badge-bg-c: 0.04;
+  --badge-fg-l: 0.42; --badge-fg-c: 0.09;
+}
+.dark .ds-b {
+  --background: oklch(0.2 0.012 60);
+  --foreground: oklch(0.94 0.015 85);
+  --card: oklch(0.24 0.014 60);
+  --card-foreground: oklch(0.94 0.015 85);
+  --primary: oklch(0.74 0.1 155);
+  --primary-foreground: oklch(0.2 0.03 155);
+  --secondary: oklch(0.3 0.02 60);
+  --secondary-foreground: oklch(0.92 0.02 85);
+  --muted: oklch(0.28 0.012 60);
+  --muted-foreground: oklch(0.73 0.02 80);
+  --accent: oklch(0.28 0.012 60);
+  --accent-foreground: oklch(0.94 0.015 85);
+  --destructive: oklch(0.7 0.17 25);
+  --border: oklch(0.95 0.02 85 / 10%);
+  --input: oklch(0.95 0.02 85 / 16%);
+  --ring: oklch(0.74 0.1 155);
+  --highlight: oklch(0.33 0.07 40);
+  --highlight-foreground: oklch(0.86 0.09 50);
+  --card-shadow: 0 12px 28px -16px oklch(0 0 0 / 0.6);
+  --badge-bg-l: 0.32; --badge-bg-c: 0.05;
+  --badge-fg-l: 0.86; --badge-fg-c: 0.07;
+}
+
+/* ───────────── Système C · Signal ───────────── */
+.ds-c {
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.15 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
+  --primary: oklch(0.15 0 0);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.94 0 0);
+  --secondary-foreground: oklch(0.15 0 0);
+  --muted: oklch(0.955 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.955 0 0);
+  --accent-foreground: oklch(0.15 0 0);
+  --destructive: oklch(0.56 0.23 28);
+  --border: oklch(0.15 0 0);
+  --input: oklch(0.15 0 0);
+  --ring: oklch(0.15 0 0);
+  --highlight: oklch(0.92 0.2 122);
+  --highlight-foreground: oklch(0.18 0.03 125);
+  --radius: 0.125rem;
+
+  --font-heading: "Space Grotesk", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --heading-weight: 700;
+  --heading-tracking: -0.03em;
+  --body-size: 14px;
+  --card-shadow: 4px 4px 0 var(--foreground);
+  --avatar-radius: var(--radius);
+  --badge-radius: 0;
+  --badge-bg-l: 1; --badge-bg-c: 0;
+  --badge-fg-l: 0.45; --badge-fg-c: 0.17;
+}
+.dark .ds-c {
+  --background: oklch(0.13 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.17 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.92 0.2 122);
+  --primary-foreground: oklch(0.15 0 0);
+  --secondary: oklch(0.24 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.22 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.22 0 0);
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.68 0.2 25);
+  --border: oklch(0.97 0 0 / 70%);
+  --input: oklch(0.97 0 0 / 70%);
+  --ring: oklch(0.92 0.2 122);
+  --highlight: oklch(0.92 0.2 122);
+  --highlight-foreground: oklch(0.15 0 0);
+  --card-shadow: 4px 4px 0 oklch(0.92 0.2 122);
+  --badge-bg-l: 0.17; --badge-bg-c: 0;
+  --badge-fg-l: 0.82; --badge-fg-c: 0.15;
+}
+.ds-c .badge { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; border: 1px solid currentColor; }
+.ds-c .badge .dot { display: none; }
+.ds-c .card, .ds-c .swatch-chip { border-width: 1.5px; }
+.ds-c .avatar { background: var(--foreground); color: var(--background); }
+.ds-b .badge { padding-left: 8px; }
+.ds-a .badge .dot { display: none; }
+
+/* ───────────── Composants (partagés, pilotés par les tokens) ───────────── */
+.ds {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: var(--body-size);
+  border-radius: 14px;
+  border: 1px solid var(--page-line);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.ds-head { padding: 22px 22px 18px; border-bottom: 1px solid var(--border); }
+.ds-head .kicker { font-family: var(--font-mono); font-size: 12px; color: var(--muted-foreground); }
+.ds-head h2 {
+  font-family: var(--font-heading); font-weight: var(--heading-weight);
+  letter-spacing: var(--heading-tracking); font-size: 28px; line-height: 1.15; margin: 4px 0 6px;
+}
+.ds-head p { color: var(--muted-foreground); font-size: 13.5px; line-height: 1.5; }
+.ds-head .fonts { margin-top: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted-foreground); }
+
+.section { padding: 20px 22px; border-bottom: 1px solid var(--border); }
+.section:last-child { border-bottom: 0; }
+.section-title {
+  font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted-foreground); margin-bottom: 14px;
+}
+
+/* Couleurs */
+.swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 8px; }
+.swatch { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.swatch-chip { height: 40px; border-radius: var(--radius); border: 1px solid var(--border); }
+.swatch-name { font-size: 12px; font-weight: 500; line-height: 1.2; }
+.swatch-value { font-family: var(--font-mono); font-size: 10px; color: var(--muted-foreground); line-height: 1.3; overflow-wrap: anywhere; }
+.stages { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+
+/* Badges d'étape */
+.badge {
+  --bg: oklch(var(--badge-bg-l) var(--badge-bg-c) var(--h));
+  --fg: oklch(var(--badge-fg-l) var(--badge-fg-c) var(--h));
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 22px; padding: 0 8px; border-radius: var(--badge-radius);
+  background: var(--bg); color: var(--fg);
+  font-size: 12px; font-weight: 500; white-space: nowrap;
+}
+.badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.st-prospect { --h: 250; }
+.st-contacte { --h: 210; }
+.st-proposition { --h: 75; }
+.st-negociation { --h: 300; }
+.st-gagne { --h: 150; }
+.st-perdu { --h: 25; }
+
+/* Typographie */
+.type-row { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: baseline; padding: 6px 0; }
+.type-row + .type-row { border-top: 1px dashed var(--border); }
+.type-label { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); }
+.t-display { font-family: var(--font-heading); font-weight: var(--heading-weight); letter-spacing: var(--heading-tracking); font-size: 30px; line-height: 1.1; }
+.t-title { font-family: var(--font-heading); font-weight: var(--heading-weight); letter-spacing: var(--heading-tracking); font-size: 19px; line-height: 1.25; }
+.t-body { font-size: var(--body-size); line-height: 1.55; }
+.t-small { font-size: 12.5px; color: var(--muted-foreground); }
+.t-mono { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* Boutons */
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn-row + .btn-row { margin-top: 10px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 34px; padding: 0 14px; border-radius: var(--radius);
+  font: 500 13.5px/1 var(--font-body); white-space: nowrap; cursor: pointer;
+  border: 1px solid transparent; transition: background .15s, box-shadow .15s, transform .1s;
+}
+.btn svg { width: 15px; height: 15px; }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 40%, transparent); }
+.btn-primary { background: var(--primary); color: var(--primary-foreground); }
+.btn-primary:hover { background: color-mix(in oklch, var(--primary) 88%, var(--background)); }
+.btn-secondary { background: var(--secondary); color: var(--secondary-foreground); }
+.btn-secondary:hover { background: color-mix(in oklch, var(--secondary) 85%, var(--foreground)); }
+.btn-outline { background: var(--background); color: var(--foreground); border-color: var(--input); }
+.btn-outline:hover { background: var(--muted); }
+.btn-ghost { background: transparent; color: var(--foreground); }
+.btn-ghost:hover { background: var(--accent); }
+.btn-destructive { background: color-mix(in oklch, var(--destructive) 12%, transparent); color: var(--destructive); }
+.btn-destructive:hover { background: color-mix(in oklch, var(--destructive) 20%, transparent); }
+.btn[disabled] { opacity: .5; pointer-events: none; }
+.btn-sm { height: 28px; padding: 0 10px; font-size: 12.5px; }
+.btn-icon { width: 34px; padding: 0; }
+.ds-c .btn-outline { border-width: 1.5px; }
+
+/* Champs */
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 13px; font-weight: 500; }
+.input {
+  height: 34px; width: 100%; padding: 0 10px; border-radius: var(--radius);
+  border: 1px solid var(--input); background: var(--card); color: var(--foreground);
+  font: 400 13.5px var(--font-body); transition: box-shadow .15s, border-color .15s;
+}
+.input::placeholder { color: var(--muted-foreground); }
+.input:focus, .input.is-focus {
+  outline: none; border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent);
+}
+.input.is-invalid { border-color: var(--destructive); box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive) 18%, transparent); }
+textarea.input { height: 68px; padding: 8px 10px; resize: none; line-height: 1.45; }
+select.input {
+  appearance: none; padding-right: 30px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%), linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+  background-size: 5px 5px; background-repeat: no-repeat;
+}
+.input.mono { font-family: var(--font-mono); font-size: 13px; }
+.hint { font-size: 12px; color: var(--muted-foreground); }
+.hint.error { color: var(--destructive); }
+.ds-c .input { border-width: 1.5px; }
+
+/* Carte de contact */
+.card {
+  background: var(--card); color: var(--card-foreground);
+  border: 1px solid var(--border); border-radius: calc(var(--radius) * 1.4);
+  box-shadow: var(--card-shadow); overflow: hidden;
+}
+.ds-c .card { border-radius: var(--radius); }
+.card-top { display: flex; gap: 12px; padding: 16px 16px 12px; align-items: flex-start; }
+.avatar {
+  flex: none; width: 40px; height: 40px; border-radius: var(--avatar-radius);
+  display: grid; place-items: center;
+  background: var(--secondary); color: var(--secondary-foreground);
+  font: 600 14px var(--font-heading);
+}
+.card-id { flex: 1; min-width: 0; }
+.card-name { font-family: var(--font-heading); font-weight: var(--heading-weight); letter-spacing: var(--heading-tracking); font-size: 17px; line-height: 1.25; }
+.card-role { font-size: 13px; color: var(--muted-foreground); margin-top: 2px; }
+.followup {
+  display: flex; align-items: center; gap: 8px; margin: 0 16px;
+  padding: 8px 10px; border-radius: var(--radius);
+  background: var(--highlight); color: var(--highlight-foreground);
+  font-size: 13px; font-weight: 500;
+}
+.followup svg { width: 15px; height: 15px; flex: none; }
+.followup .when { margin-left: auto; font-family: var(--font-mono); font-size: 12px; font-weight: 400; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 14px 16px; }
+.meta dt { font-size: 11.5px; color: var(--muted-foreground); }
+.meta dd { font-size: 13.5px; margin-top: 1px; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.meta dd span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta dd svg { width: 14px; height: 14px; color: var(--muted-foreground); flex: none; }
+.meta .amount { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.note { margin: 0 16px 14px; font-size: 13px; line-height: 1.5; color: var(--muted-foreground); border-left: 2px solid var(--border); padding-left: 10px; }
+.card-actions { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 50%, var(--card)); }
+.card-actions .spacer { flex: 1; }
+
+/* Ligne compacte (liste) */
+.row-list { margin-top: 14px; border: 1px solid var(--border); border-radius: calc(var(--radius) * 1.4); overflow: hidden; background: var(--card); }
+.ds-c .row-list { border-radius: var(--radius); border-width: 1.5px; }
+.row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 10px 14px; font-size: 13.5px; }
+.row + .row { border-top: 1px solid var(--border); }
+.row .who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .who b { font-weight: 500; }
+.row .who span { color: var(--muted-foreground); }
+.row .date { font-family: var(--font-mono); font-size: 12px; color: var(--muted-foreground); }
+.row .date.today { color: var(--highlight-foreground); background: var(--highlight); padding: 1px 6px; border-radius: 4px; }
+.ds-c .row + .row { border-top-color: color-mix(in oklch, var(--border) 25%, transparent); }
+
+@media (max-width: 420px) {
+  .swatches { grid-template-columns: repeat(2, 1fr); }
+  .fields { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div>
+    <h1>Pipeline · trois design systems</h1>
+    <p>Mêmes composants, mêmes contenus : seuls les tokens changent. Les noms de variables sont ceux du thème shadcn (<code>--primary</code>, <code>--muted</code>…) plus <code>--highlight</code> pour les relances du jour.</p>
+  </div>
+  <button class="mode-toggle" type="button" id="mode-toggle">Mode sombre</button>
+</header>
+
+<main class="systems">
+  <section class="ds ds-a" data-name="A · Ardoise" data-desc="Outil de travail dense et précis. Gris froids, accent indigo, ambre pour les relances. Lisible à petite taille, proche de Linear." data-fonts="Inter · JetBrains Mono · rayon 6px"></section>
+  <section class="ds ds-b" data-name="B · Papier" data-desc="Calme et chaleureux, comme un carnet. Fond crème, vert forêt pour l'action, terracotta pour les relances. Titres en serif." data-fonts="Fraunces · DM Sans · DM Mono · rayon 12px"></section>
+  <section class="ds ds-c" data-name="C · Signal" data-desc="Contraste maximal, lecture instantanée. Noir et blanc, jaune-vert fluo pour ce qui est à faire aujourd'hui. Angles vifs, ombres décalées." data-fonts="Space Grotesk · IBM Plex Sans · IBM Plex Mono · rayon 2px"></section>
+</main>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.27 21a2 2 0 0 0 3.46 0"/><path d="M3.26 15.33A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.67C19.41 13.96 18 12.5 18 8A6 6 0 0 0 6 8c0 4.5-1.41 5.96-2.74 7.33"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></symbol>
+    <symbol id="i-euro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  </defs>
+</svg>
+
+<template id="ds-template">
+  <div class="ds-head">
+    <div class="kicker">Proposition</div>
+    <h2 data-slot="name"></h2>
+    <p data-slot="desc"></p>
+    <div class="fonts" data-slot="fonts"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Couleurs</div>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch-chip" style="background:var(--background)"></div><div class="swatch-name">background</div><div class="swatch-value" data-token="--background"></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:var(--foreground)"></div><div class="swatch-name">foreground</div><div class="swatch-value" data-token="--foreground"></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:var(--primary)"></div><div class="swatch-name">primary</div><div class="swatch-value" data-token="--primary"></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:var(--secondary)"></div><div class="swatch-name">secondary</div><div class="swatch-value" data-token="--secondary"></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:var(--muted)"></div><div class="swatch-name">muted</div><div class="swatch-value" data-token="--muted"></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:var(--border)"></div><div class="swatch-name">border</div><div class="swatch-value" data-token="--border"></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:var(--highlight)"></div><div class="swatch-name">highlight</div><div class="swatch-value" data-token="--highlight"></div></div>
+      <div class="swatch"><div class="swatch-chip" style="background:var(--destructive)"></div><div class="swatch-name">destructive</div><div class="swatch-value" data-token="--destructive"></div></div>
+    </div>
+    <div class="stages">
+      <span class="badge st-prospect"><span class="dot"></span>Prospect</span>
+      <span class="badge st-contacte"><span class="dot"></span>Contacté</span>
+      <span class="badge st-proposition"><span class="dot"></span>Proposition</span>
+      <span class="badge st-negociation"><span class="dot"></span>Négociation</span>
+      <span class="badge st-gagne"><span class="dot"></span>Gagné</span>
+      <span class="badge st-perdu"><span class="dot"></span>Perdu</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Typographie</div>
+    <div class="type-row"><span class="type-label">Display</span><span class="t-display">Relances du jour</span></div>
+    <div class="type-row"><span class="type-label">Titre</span><span class="t-title">Atelier Norde — Camille Laurent</span></div>
+    <div class="type-row"><span class="type-label">Corps</span><span class="t-body">Proposition envoyée le 14 novembre. Relancer si pas de retour avant vendredi.</span></div>
+    <div class="type-row"><span class="type-label">Petit</span><span class="t-small">Dernier échange il y a 6 jours · appel</span></div>
+    <div class="type-row"><span class="type-label">Mono</span><span class="t-mono">12 500 € · 20/11/2026 · 06 12 34 56 78</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Boutons</div>
+    <div class="btn-row">
+      <button class="btn btn-primary"><svg><use href="#i-plus"/></svg>Ajouter un contact</button>
+      <button class="btn btn-secondary">Exporter</button>
+      <button class="btn btn-outline">Étape suivante<svg><use href="#i-arrow"/></svg></button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost">Annuler</button>
+      <button class="btn btn-destructive">Supprimer</button>
+      <button class="btn btn-primary" disabled>Désactivé</button>
+      <button class="btn btn-primary btn-sm">Petit</button>
+      <button class="btn btn-outline btn-icon" aria-label="Plus d'actions"><svg><use href="#i-more"/></svg></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Champs</div>
+    <div class="fields">
+      <div class="field full">
+        <label>Nom du contact</label>
+        <input class="input" value="Camille Laurent">
+      </div>
+      <div class="field">
+        <label>Entreprise</label>
+        <input class="input is-focus" value="Atelier Norde">
+      </div>
+      <div class="field">
+        <label>Étape</label>
+        <select class="input"><option>Prospect</option><option>Contacté</option><option selected>Proposition</option><option>Négociation</option><option>Gagné</option><option>Perdu</option></select>
+      </div>
+      <div class="field">
+        <label>Prochaine relance</label>
+        <input class="input mono" value="20/11/2026">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input class="input is-invalid" value="camille@norde">
+        <span class="hint error">Adresse email incomplète</span>
+      </div>
+      <div class="field full">
+        <label>Notes</label>
+        <textarea class="input" placeholder="Contexte, besoins, objections…"></textarea>
+        <span class="hint">Visible uniquement par vous.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Carte de contact</div>
+    <article class="card">
+      <div class="card-top">
+        <div class="avatar">CL</div>
+        <div class="card-id">
+          <div class="card-name">Camille Laurent</div>
+          <div class="card-role">Directrice achats · Atelier Norde</div>
+        </div>
+        <span class="badge st-proposition"><span class="dot"></span>Proposition</span>
+      </div>
+      <div class="followup"><svg><use href="#i-bell"/></svg>À relancer aujourd'hui<span class="when">20/11</span></div>
+      <dl class="meta">
+        <div><dt>Email</dt><dd><svg><use href="#i-mail"/></svg><span>camille@norde.fr</span></dd></div>
+        <div><dt>Téléphone</dt><dd><svg><use href="#i-phone"/></svg><span>06 12 34 56 78</span></dd></div>
+        <div><dt>Montant estimé</dt><dd class="amount"><svg><use href="#i-euro"/></svg><span>12 500 €</span></dd></div>
+        <div><dt>Dernier échange</dt><dd><svg><use href="#i-cal"/></svg><span>Appel, 14 nov.</span></dd></div>
+      </dl>
+      <p class="note">Intéressée par le forfait annuel, attend la validation de son DAF.</p>
+      <div class="card-actions">
+        <button class="btn btn-primary btn-sm"><svg><use href="#i-check"/></svg>Relancé</button>
+        <button class="btn btn-outline btn-sm">Étape suivante</button>
+        <span class="spacer"></span>
+        <button class="btn btn-ghost btn-sm btn-icon" aria-label="Plus d'actions"><svg><use href="#i-more"/></svg></button>
+      </div>
+    </article>
+    <div class="row-list">
+      <div class="row"><div class="who"><b>Thomas Bérard</b> <span>· Kilo Studio</span></div><span class="badge st-negociation"><span class="dot"></span>Négociation</span><span class="date today">Auj.</span></div>
+      <div class="row"><div class="who"><b>Inès Mahdi</b> <span>· Verso</span></div><span class="badge st-contacte"><span class="dot"></span>Contacté</span><span class="date">22/11</span></div>
+      <div class="row"><div class="who"><b>Paul Ferrand</b> <span>· Opale & Fils</span></div><span class="badge st-gagne"><span class="dot"></span>Gagné</span><span class="date">—</span></div>
+    </div>
+  </div>
+</template>
+
+<script>
+  const tpl = document.getElementById("ds-template");
+  for (const ds of document.querySelectorAll(".ds")) {
+    ds.append(tpl.content.cloneNode(true));
+    ds.querySelector('[data-slot="name"]').textContent = ds.dataset.name;
+    ds.querySelector('[data-slot="desc"]').textContent = ds.dataset.desc;
+    ds.querySelector('[data-slot="fonts"]').textContent = ds.dataset.fonts;
+  }
+
+  function showTokens() {
+    for (const el of document.querySelectorAll("[data-token]")) {
+      const ds = el.closest(".ds");
+      el.textContent = getComputedStyle(ds).getPropertyValue(el.dataset.token).trim();
+    }
+  }
+
+  const root = document.documentElement;
+  const toggle = document.getElementById("mode-toggle");
+  function setDark(on) {
+    root.classList.toggle("dark", on);
+    toggle.textContent = on ? "Mode clair" : "Mode sombre";
+    showTokens();
+  }
+  let dark = false;
+  try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch {}
+  setDark(dark);
+  toggle.addEventListener("click", () => setDark(!root.classList.contains("dark")));
+</script>
+</body>
+</html>
