@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Découpage en lots (local, suivi dans les issues GitHub)
+/lots.md
