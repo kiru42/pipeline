@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Découpage en lots (local, suivi dans les issues GitHub)
 /lots.md
+
+# Base SQLite locale
+/.data/
