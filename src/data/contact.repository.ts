@@ -1,27 +1,81 @@
-import type { Client } from "@libsql/client";
+import type { Client, Row } from "@libsql/client";
 
-export type Contact = { id: string; name: string };
+export type Contact = {
+  id: string;
+  name: string;
+  company: string | null;
+  email: string | null;
+  phone: string | null;
+  note: string | null;
+};
 
 export interface ContactRepository {
   list(): Promise<Contact[]>;
+  findById(id: string): Promise<Contact | null>;
   create(contact: Contact): Promise<void>;
+  update(contact: Contact): Promise<void>;
+}
+
+const COLUMNS = "id, name, company, email, phone, note";
+
+function nullableText(value: Row[string]): string | null {
+  return value === null || value === undefined ? null : String(value);
+}
+
+function toContact(row: Row): Contact {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    company: nullableText(row.company),
+    email: nullableText(row.email),
+    phone: nullableText(row.phone),
+    note: nullableText(row.note),
+  };
 }
 
 export function createLibsqlContactRepository(client: Client): ContactRepository {
   return {
     async list() {
       const result = await client.execute(
-        "SELECT id, name FROM contacts ORDER BY rowid",
+        `SELECT ${COLUMNS} FROM contacts ORDER BY rowid`,
       );
-      return result.rows.map((row) => ({
-        id: String(row.id),
-        name: String(row.name),
-      }));
+      return result.rows.map(toContact);
     },
+
+    async findById(id) {
+      const result = await client.execute({
+        sql: `SELECT ${COLUMNS} FROM contacts WHERE id = ?`,
+        args: [id],
+      });
+      const row = result.rows[0];
+      return row ? toContact(row) : null;
+    },
+
     async create(contact) {
       await client.execute({
-        sql: "INSERT INTO contacts (id, name) VALUES (?, ?)",
-        args: [contact.id, contact.name],
+        sql: `INSERT INTO contacts (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [
+          contact.id,
+          contact.name,
+          contact.company,
+          contact.email,
+          contact.phone,
+          contact.note,
+        ],
+      });
+    },
+
+    async update(contact) {
+      await client.execute({
+        sql: "UPDATE contacts SET name = ?, company = ?, email = ?, phone = ?, note = ? WHERE id = ?",
+        args: [
+          contact.name,
+          contact.company,
+          contact.email,
+          contact.phone,
+          contact.note,
+          contact.id,
+        ],
       });
     },
   };

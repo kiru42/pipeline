@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Empty,
   EmptyDescription,
@@ -19,8 +20,16 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
   return (
     <ul className="divide-y divide-border rounded-xl border border-border">
       {contacts.map((contact) => (
-        <li key={contact.id} className="px-4 py-3 text-sm text-foreground">
-          {contact.name}
+        <li key={contact.id}>
+          <Link
+            href={`/contacts/${contact.id}`}
+            className="flex flex-col gap-0.5 px-4 py-3 text-sm outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
+          >
+            <span className="font-medium text-foreground">{contact.name}</span>
+            {contact.company && (
+              <span className="text-muted-foreground">{contact.company}</span>
+            )}
+          </Link>
         </li>
       ))}
     </ul>
