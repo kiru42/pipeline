@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { formatDay } from "@/lib/dates";
 import type { Contact } from "@/services/contact.service";
 import { getStage } from "@/services/stages";
 
@@ -17,6 +18,11 @@ export function ContactDetails({ contact }: { contact: Contact }) {
         <h1 className="text-2xl font-semibold text-foreground">{contact.name}</h1>
         {stage.closed && <Badge variant="secondary">Clos</Badge>}
       </div>
+      <p className="text-sm text-muted-foreground">
+        {contact.nextFollowUp
+          ? `Relance le ${formatDay(contact.nextFollowUp)}`
+          : "Aucune relance planifiée"}
+      </p>
       <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
         <dt className="text-muted-foreground">Étape</dt>
         <dd className="text-foreground">{stage.label}</dd>

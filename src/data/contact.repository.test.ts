@@ -30,6 +30,7 @@ function contact(overrides: Partial<Contact> & Pick<Contact, "id" | "name">): Co
     phone: null,
     note: null,
     stage: "nouveau",
+    nextFollowUp: null,
     ...overrides,
   };
 }
@@ -143,6 +144,30 @@ describe("ContactRepository (libsql)", () => {
 
       const second = await openRepository(url);
       expect((await second.repository.findById("1"))?.stage).toBe("gagne");
+      second.client.close();
+    });
+  });
+
+  describe("relance", () => {
+    it("enregistre puis efface la date de la prochaine relance", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      await repository.create(marie);
+      await repository.update({ ...marie, nextFollowUp: "2026-11-25" });
+      expect((await repository.findById("1"))?.nextFollowUp).toBe("2026-11-25");
+      expect((await repository.list())[0].nextFollowUp).toBe("2026-11-25");
+      await repository.update({ ...marie, nextFollowUp: null });
+      expect((await repository.findById("1"))?.nextFollowUp).toBeNull();
+      client.close();
+    });
+
+    it("conserve la relance après un redémarrage", async () => {
+      const url = tempDbUrl();
+      const first = await openRepository(url);
+      await first.repository.create({ ...marie, nextFollowUp: "2026-11-25" });
+      first.client.close();
+
+      const second = await openRepository(url);
+      expect((await second.repository.findById("1"))?.nextFollowUp).toBe("2026-11-25");
       second.client.close();
     });
   });

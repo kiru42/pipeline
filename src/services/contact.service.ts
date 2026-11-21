@@ -1,5 +1,5 @@
 import type { Contact, ContactRepository } from "@/data/contact.repository";
-import { isStage } from "./stages";
+import { isClosedStage, isStage } from "./stages";
 
 export type { Contact };
 export type { Stage, StageInfo } from "./stages";
@@ -25,7 +25,30 @@ export type ChangeStageResult =
   | { ok: true; contact: Contact }
   | { ok: false; error: string };
 
-type Dependencies = { generateId: () => string };
+export type FollowUpResult =
+  | { ok: true; contact: Contact }
+  | { ok: false; error: string };
+
+type Dependencies = {
+  generateId: () => string;
+  /** Date du jour, au format AAAA-MM-JJ. */
+  today: () => string;
+};
+
+const DAY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** Vrai pour une date AAAA-MM-JJ qui existe au calendrier. */
+function isValidDay(value: string): boolean {
+  const match = DAY_PATTERN.exec(value);
+  if (!match) return false;
+  const [year, month, day] = match.slice(1).map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -36,7 +59,7 @@ function optional(value: string): string | null {
 
 export function createContactService(
   repository: ContactRepository,
-  { generateId }: Dependencies,
+  { generateId, today }: Dependencies,
 ) {
   return {
     listContacts(): Promise<Contact[]> {
@@ -60,6 +83,7 @@ export function createContactService(
         phone: null,
         note: null,
         stage: "nouveau",
+        nextFollowUp: null,
       };
       await repository.create(contact);
       return { ok: true, contact };
@@ -98,7 +122,41 @@ export function createContactService(
       if (!existing) {
         return { ok: false, error: "Contact introuvable." };
       }
-      const contact: Contact = { ...existing, stage };
+      const contact: Contact = {
+        ...existing,
+        stage,
+        // Un contact clos n'a plus de relance.
+        nextFollowUp: isClosedStage(stage) ? null : existing.nextFollowUp,
+      };
+      await repository.update(contact);
+      return { ok: true, contact };
+    },
+
+    async scheduleFollowUp(id: string, date: string): Promise<FollowUpResult> {
+      if (!isValidDay(date)) {
+        return { ok: false, error: "La date n'est pas valide." };
+      }
+      if (date < today()) {
+        return { ok: false, error: "La date de relance ne peut pas être dans le passé." };
+      }
+      const existing = await repository.findById(id);
+      if (!existing) {
+        return { ok: false, error: "Contact introuvable." };
+      }
+      if (isClosedStage(existing.stage)) {
+        return { ok: false, error: "Un contact clos ne peut pas avoir de relance." };
+      }
+      const contact: Contact = { ...existing, nextFollowUp: date };
+      await repository.update(contact);
+      return { ok: true, contact };
+    },
+
+    async clearFollowUp(id: string): Promise<FollowUpResult> {
+      const existing = await repository.findById(id);
+      if (!existing) {
+        return { ok: false, error: "Contact introuvable." };
+      }
+      const contact: Contact = { ...existing, nextFollowUp: null };
       await repository.update(contact);
       return { ok: true, contact };
     },

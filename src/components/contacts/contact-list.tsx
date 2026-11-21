@@ -5,6 +5,7 @@ import {
   EmptyHeader,
 } from "@/components/ui/empty";
 import { Badge } from "@/components/ui/badge";
+import { formatDay } from "@/lib/dates";
 import type { Contact } from "@/services/contact.service";
 import { getStage } from "@/services/stages";
 
@@ -33,9 +34,16 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
                 <span className="text-muted-foreground">{contact.company}</span>
               )}
             </span>
-            <Badge variant={getStage(contact.stage).closed ? "secondary" : "outline"}>
-              {getStage(contact.stage).label}
-            </Badge>
+            <span className="flex shrink-0 items-center gap-3">
+              {contact.nextFollowUp && (
+                <span className="text-muted-foreground">
+                  Relance le {formatDay(contact.nextFollowUp)}
+                </span>
+              )}
+              <Badge variant={getStage(contact.stage).closed ? "secondary" : "outline"}>
+                {getStage(contact.stage).label}
+              </Badge>
+            </span>
           </Link>
         </li>
       ))}

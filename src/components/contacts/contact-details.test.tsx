@@ -14,6 +14,7 @@ const marie: Contact = {
   phone: "06 12 34 56 78",
   note: "Rencontrée au salon",
   stage: "nouveau",
+  nextFollowUp: null,
 };
 
 function valueOf(label: string) {
@@ -55,5 +56,16 @@ describe("ContactDetails", () => {
     render(<ContactDetails contact={{ ...marie, stage }} />);
     expect(valueOf("Étape")).toBe(label);
     expect(screen.getByText("Clos")).toBeDefined();
+  });
+
+  it("indique la date de la prochaine relance", () => {
+    render(<ContactDetails contact={{ ...marie, nextFollowUp: "2026-11-25" }} />);
+    expect(screen.getByText("Relance le 25/11")).toBeDefined();
+  });
+
+  it("n'affiche aucune date de relance quand il n'y en a pas", () => {
+    render(<ContactDetails contact={marie} />);
+    expect(screen.queryByText(/Relance le/)).toBeNull();
+    expect(screen.getByText("Aucune relance planifiée")).toBeDefined();
   });
 });

@@ -17,6 +17,8 @@ export type Contact = {
   phone: string | null;
   note: string | null;
   stage: Stage;
+  /** Date de la prochaine relance, au format AAAA-MM-JJ. */
+  nextFollowUp: string | null;
 };
 
 export interface ContactRepository {
@@ -26,7 +28,7 @@ export interface ContactRepository {
   update(contact: Contact): Promise<void>;
 }
 
-const COLUMNS = "id, name, company, email, phone, note, stage";
+const COLUMNS = "id, name, company, email, phone, note, stage, next_follow_up";
 
 function nullableText(value: Row[string]): string | null {
   return value === null || value === undefined ? null : String(value);
@@ -41,6 +43,7 @@ function toContact(row: Row): Contact {
     phone: nullableText(row.phone),
     note: nullableText(row.note),
     stage: String(row.stage) as Stage,
+    nextFollowUp: nullableText(row.next_follow_up),
   };
 }
 
@@ -64,7 +67,7 @@ export function createLibsqlContactRepository(client: Client): ContactRepository
 
     async create(contact) {
       await client.execute({
-        sql: `INSERT INTO contacts (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        sql: `INSERT INTO contacts (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
           contact.id,
           contact.name,
@@ -73,13 +76,14 @@ export function createLibsqlContactRepository(client: Client): ContactRepository
           contact.phone,
           contact.note,
           contact.stage,
+          contact.nextFollowUp,
         ],
       });
     },
 
     async update(contact) {
       await client.execute({
-        sql: "UPDATE contacts SET name = ?, company = ?, email = ?, phone = ?, note = ?, stage = ? WHERE id = ?",
+        sql: "UPDATE contacts SET name = ?, company = ?, email = ?, phone = ?, note = ?, stage = ?, next_follow_up = ? WHERE id = ?",
         args: [
           contact.name,
           contact.company,
@@ -87,6 +91,7 @@ export function createLibsqlContactRepository(client: Client): ContactRepository
           contact.phone,
           contact.note,
           contact.stage,
+          contact.nextFollowUp,
           contact.id,
         ],
       });

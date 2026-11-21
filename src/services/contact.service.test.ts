@@ -9,6 +9,7 @@ function contact(overrides: Partial<Contact> & Pick<Contact, "id" | "name">): Co
     phone: null,
     note: null,
     stage: "nouveau",
+    nextFollowUp: null,
     ...overrides,
   };
 }
@@ -37,11 +38,14 @@ function createFakeRepository(initial: Contact[] = []) {
   return { repository, writes: () => writes };
 }
 
+const TODAY = "2026-11-21";
+
 function setup(initial: Contact[] = []) {
   const fake = createFakeRepository(initial);
   let next = 0;
   const service = createContactService(fake.repository, {
     generateId: () => `id-${++next}`,
+    today: () => TODAY,
   });
   return { service, ...fake };
 }
@@ -217,6 +221,21 @@ describe("ContactService", () => {
       expect(await service.getContact("1")).toEqual({ ...complete, stage: "proposition" });
     });
 
+    it.each(["gagne", "perdu"])(
+      "supprime la relance d'un contact qui passe à l'étape close « %s »",
+      async (stage) => {
+        const { service } = setup([contact({ ...marie, nextFollowUp: "2026-11-25" })]);
+        await service.changeStage("1", stage);
+        expect((await service.getContact("1"))?.nextFollowUp).toBeNull();
+      },
+    );
+
+    it("conserve la relance d'un contact qui reste ouvert", async () => {
+      const { service } = setup([contact({ ...marie, nextFollowUp: "2026-11-25" })]);
+      await service.changeStage("1", "proposition");
+      expect((await service.getContact("1"))?.nextFollowUp).toBe("2026-11-25");
+    });
+
     it("refuse une étape inconnue sans rien enregistrer", async () => {
       const { service, writes } = setup([marie]);
       const result = await service.changeStage("1", "archive");
@@ -227,6 +246,88 @@ describe("ContactService", () => {
     it("refuse un contact inconnu", async () => {
       const { service, writes } = setup([marie]);
       const result = await service.changeStage("inconnu", "contacte");
+      expect(result).toEqual({ ok: false, error: "Contact introuvable." });
+      expect(writes()).toBe(0);
+    });
+  });
+
+  describe("scheduleFollowUp", () => {
+    it("planifie la relance d'un contact sans relance", async () => {
+      const { service } = setup([marie]);
+      const result = await service.scheduleFollowUp("1", "2026-11-25");
+      const expected = contact({ ...marie, nextFollowUp: "2026-11-25" });
+      expect(result).toEqual({ ok: true, contact: expected });
+      expect(await service.getContact("1")).toEqual(expected);
+      expect(await service.listContacts()).toEqual([expected]);
+    });
+
+    it("remplace une relance existante", async () => {
+      const { service } = setup([contact({ ...marie, nextFollowUp: "2026-11-25" })]);
+      await service.scheduleFollowUp("1", "2026-12-02");
+      expect((await service.getContact("1"))?.nextFollowUp).toBe("2026-12-02");
+    });
+
+    it("accepte une relance aujourd'hui", async () => {
+      const { service } = setup([marie]);
+      const result = await service.scheduleFollowUp("1", TODAY);
+      expect(result.ok).toBe(true);
+    });
+
+    it.each(["2026-11-20", "2025-11-25"])(
+      "refuse la date passée %s sans rien enregistrer",
+      async (date) => {
+        const { service, writes } = setup([marie]);
+        const result = await service.scheduleFollowUp("1", date);
+        expect(result).toEqual({
+          ok: false,
+          error: "La date de relance ne peut pas être dans le passé.",
+        });
+        expect(writes()).toBe(0);
+      },
+    );
+
+    it.each(["", "25/11/2026", "2026-02-30", "2026-13-01", "demain"])(
+      "refuse la date invalide « %s »",
+      async (date) => {
+        const { service, writes } = setup([marie]);
+        const result = await service.scheduleFollowUp("1", date);
+        expect(result).toEqual({ ok: false, error: "La date n'est pas valide." });
+        expect(writes()).toBe(0);
+      },
+    );
+
+    it.each(["gagne", "perdu"] as const)(
+      "refuse de planifier une relance pour un contact clos (« %s »)",
+      async (stage) => {
+        const { service, writes } = setup([contact({ ...marie, stage })]);
+        const result = await service.scheduleFollowUp("1", "2026-11-25");
+        expect(result).toEqual({
+          ok: false,
+          error: "Un contact clos ne peut pas avoir de relance.",
+        });
+        expect(writes()).toBe(0);
+      },
+    );
+
+    it("refuse un contact inconnu", async () => {
+      const { service, writes } = setup([marie]);
+      const result = await service.scheduleFollowUp("inconnu", "2026-11-25");
+      expect(result).toEqual({ ok: false, error: "Contact introuvable." });
+      expect(writes()).toBe(0);
+    });
+  });
+
+  describe("clearFollowUp", () => {
+    it("supprime la relance du contact", async () => {
+      const { service } = setup([contact({ ...marie, nextFollowUp: "2026-11-25" })]);
+      const result = await service.clearFollowUp("1");
+      expect(result).toEqual({ ok: true, contact: marie });
+      expect((await service.getContact("1"))?.nextFollowUp).toBeNull();
+    });
+
+    it("refuse un contact inconnu", async () => {
+      const { service, writes } = setup([marie]);
+      const result = await service.clearFollowUp("inconnu");
       expect(result).toEqual({ ok: false, error: "Contact introuvable." });
       expect(writes()).toBe(0);
     });

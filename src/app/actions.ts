@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import type { AddContactState } from "@/components/contacts/add-contact-form";
 import type { ContactFormState } from "@/components/contacts/contact-form";
+import type { FollowUpFormState } from "@/components/contacts/follow-up-form";
 import type { StageSelectorState } from "@/components/contacts/stage-selector";
 import { getContactService } from "@/services/container";
 
@@ -54,6 +55,30 @@ export async function changeStageAction(
 ): Promise<StageSelectorState> {
   const service = await getContactService();
   const result = await service.changeStage(id, stage);
+  if (!result.ok) {
+    return { error: result.error };
+  }
+  refresh();
+  return {};
+}
+
+export async function scheduleFollowUpAction(
+  id: string,
+  _state: FollowUpFormState,
+  formData: FormData,
+): Promise<FollowUpFormState> {
+  const service = await getContactService();
+  const result = await service.scheduleFollowUp(id, text(formData, "date"));
+  if (!result.ok) {
+    return { error: result.error };
+  }
+  refresh();
+  return {};
+}
+
+export async function clearFollowUpAction(id: string): Promise<FollowUpFormState> {
+  const service = await getContactService();
+  const result = await service.clearFollowUp(id);
   if (!result.ok) {
     return { error: result.error };
   }
