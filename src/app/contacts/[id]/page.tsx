@@ -4,8 +4,15 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { ContactDetails } from "@/components/contacts/contact-details";
 import { ContactForm } from "@/components/contacts/contact-form";
+import { FollowUpForm } from "@/components/contacts/follow-up-form";
+import { StageSelector } from "@/components/contacts/stage-selector";
 import { getContactService } from "@/services/container";
-import { updateContactAction } from "../../actions";
+import {
+  changeStageAction,
+  clearFollowUpAction,
+  scheduleFollowUpAction,
+  updateContactAction,
+} from "../../actions";
 
 async function ContactSheet({ params }: Pick<PageProps<"/contacts/[id]">, "params">) {
   const { id } = await params;
@@ -18,6 +25,17 @@ async function ContactSheet({ params }: Pick<PageProps<"/contacts/[id]">, "param
   return (
     <>
       <ContactDetails contact={contact} />
+      <StageSelector
+        key={contact.stage}
+        stage={contact.stage}
+        action={changeStageAction.bind(null, contact.id)}
+      />
+      <FollowUpForm
+        key={`${contact.stage}:${contact.nextFollowUp}`}
+        contact={contact}
+        schedule={scheduleFollowUpAction.bind(null, contact.id)}
+        clear={clearFollowUpAction.bind(null, contact.id)}
+      />
       <ContactForm contact={contact} action={updateContactAction.bind(null, contact.id)} />
     </>
   );

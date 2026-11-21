@@ -13,6 +13,9 @@ const marie: Contact = {
   email: "marie@acme.fr",
   phone: null,
   note: null,
+  stage: "nouveau",
+  nextFollowUp: null,
+  lastContactedAt: null,
 };
 
 type Action = (state: ContactFormState, formData: FormData) => Promise<ContactFormState>;

@@ -13,6 +13,9 @@ const marie: Contact = {
   email: null,
   phone: null,
   note: null,
+  stage: "nouveau",
+  nextFollowUp: null,
+  lastContactedAt: null,
 };
 
 describe("ContactList", () => {
@@ -36,5 +39,31 @@ describe("ContactList", () => {
   it("affiche l'entreprise du contact", () => {
     render(<ContactList contacts={[marie]} />);
     expect(screen.getByText("Acme")).toBeDefined();
+  });
+
+  it("affiche l'étape de chaque contact", () => {
+    render(
+      <ContactList
+        contacts={[marie, { ...marie, id: "2", name: "Alain Martin", stage: "rendez-vous" }]}
+      />,
+    );
+    expect(screen.getByRole("link", { name: /Marie Dupont/ }).textContent).toContain("Nouveau");
+    expect(screen.getByRole("link", { name: /Alain Martin/ }).textContent).toContain(
+      "Rendez-vous",
+    );
+  });
+
+  it("affiche la date de relance des contacts qui en ont une", () => {
+    render(
+      <ContactList
+        contacts={[marie, { ...marie, id: "2", name: "Alain Martin", nextFollowUp: "2026-11-25" }]}
+      />,
+    );
+    expect(screen.getByRole("link", { name: /Alain Martin/ }).textContent).toContain(
+      "Relance le 25/11",
+    );
+    expect(screen.getByRole("link", { name: /Marie Dupont/ }).textContent).not.toContain(
+      "Relance",
+    );
   });
 });

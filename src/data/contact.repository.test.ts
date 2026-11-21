@@ -24,7 +24,16 @@ async function openRepository(url: string) {
 }
 
 function contact(overrides: Partial<Contact> & Pick<Contact, "id" | "name">): Contact {
-  return { company: null, email: null, phone: null, note: null, ...overrides };
+  return {
+    company: null,
+    email: null,
+    phone: null,
+    note: null,
+    stage: "nouveau",
+    nextFollowUp: null,
+    lastContactedAt: null,
+    ...overrides,
+  };
 }
 
 const marie = contact({ id: "1", name: "Marie Dupont" });
@@ -107,6 +116,98 @@ describe("ContactRepository (libsql)", () => {
       const second = await openRepository(url);
       expect(await second.repository.findById("1")).toEqual(marieComplete);
       second.client.close();
+    });
+  });
+
+  describe("étape", () => {
+    it("enregistre l'étape à la création", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      await repository.create({ ...marie, stage: "contacte" });
+      expect((await repository.findById("1"))?.stage).toBe("contacte");
+      client.close();
+    });
+
+    it("enregistre un changement d'étape, visible dans la liste", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      await repository.create({ ...marie, stage: "contacte" });
+      await repository.update({ ...marie, stage: "rendez-vous" });
+      expect((await repository.findById("1"))?.stage).toBe("rendez-vous");
+      expect((await repository.list())[0].stage).toBe("rendez-vous");
+      client.close();
+    });
+
+    it("conserve la nouvelle étape après un redémarrage", async () => {
+      const url = tempDbUrl();
+      const first = await openRepository(url);
+      await first.repository.create(marie);
+      await first.repository.update({ ...marie, stage: "gagne" });
+      first.client.close();
+
+      const second = await openRepository(url);
+      expect((await second.repository.findById("1"))?.stage).toBe("gagne");
+      second.client.close();
+    });
+  });
+
+  describe("relance", () => {
+    it("enregistre puis efface la date de la prochaine relance", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      await repository.create(marie);
+      await repository.update({ ...marie, nextFollowUp: "2026-11-25" });
+      expect((await repository.findById("1"))?.nextFollowUp).toBe("2026-11-25");
+      expect((await repository.list())[0].nextFollowUp).toBe("2026-11-25");
+      await repository.update({ ...marie, nextFollowUp: null });
+      expect((await repository.findById("1"))?.nextFollowUp).toBeNull();
+      client.close();
+    });
+
+    it("conserve la relance après un redémarrage", async () => {
+      const url = tempDbUrl();
+      const first = await openRepository(url);
+      await first.repository.create({ ...marie, nextFollowUp: "2026-11-25" });
+      first.client.close();
+
+      const second = await openRepository(url);
+      expect((await second.repository.findById("1"))?.nextFollowUp).toBe("2026-11-25");
+      second.client.close();
+    });
+  });
+
+  describe("dernier contact", () => {
+    it("enregistre la date du dernier contact et la conserve après un redémarrage", async () => {
+      const url = tempDbUrl();
+      const first = await openRepository(url);
+      await first.repository.create({ ...marie, nextFollowUp: "2026-11-21" });
+      await first.repository.update({ ...marie, nextFollowUp: null, lastContactedAt: "2026-11-21" });
+      first.client.close();
+
+      const second = await openRepository(url);
+      const found = await second.repository.findById("1");
+      expect(found?.lastContactedAt).toBe("2026-11-21");
+      expect(found?.nextFollowUp).toBeNull();
+      expect(await second.repository.listWithFollowUpDueBy("2026-11-21")).toEqual([]);
+      second.client.close();
+    });
+  });
+
+  describe("listWithFollowUpDueBy", () => {
+    it("renvoie les contacts dont la relance tombe au plus tard à la date donnée, de la plus ancienne à la plus récente", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      const aujourdhui = contact({ id: "1", name: "Aujourd'hui", nextFollowUp: "2026-11-21" });
+      const hier = contact({ id: "2", name: "Hier", nextFollowUp: "2026-11-20" });
+      const demain = contact({ id: "3", name: "Demain", nextFollowUp: "2026-11-22" });
+      const sansRelance = contact({ id: "4", name: "Sans relance" });
+      for (const c of [aujourdhui, hier, demain, sansRelance]) await repository.create(c);
+
+      expect(await repository.listWithFollowUpDueBy("2026-11-21")).toEqual([hier, aujourdhui]);
+      client.close();
+    });
+
+    it("renvoie une liste vide quand aucune relance n'est due", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      await repository.create(contact({ id: "1", name: "Demain", nextFollowUp: "2026-11-22" }));
+      expect(await repository.listWithFollowUpDueBy("2026-11-21")).toEqual([]);
+      client.close();
     });
   });
 

@@ -28,6 +28,20 @@ const MIGRATIONS: { version: number; statements: string[] }[] = [
       "ALTER TABLE contacts ADD COLUMN note TEXT",
     ],
   },
+  {
+    version: 3,
+    statements: [
+      "ALTER TABLE contacts ADD COLUMN stage TEXT NOT NULL DEFAULT 'nouveau'",
+    ],
+  },
+  {
+    version: 4,
+    statements: ["ALTER TABLE contacts ADD COLUMN next_follow_up TEXT"],
+  },
+  {
+    version: 5,
+    statements: ["ALTER TABLE contacts ADD COLUMN last_contacted_at TEXT"],
+  },
 ];
 
 export async function migrate(client: Client): Promise<void> {
