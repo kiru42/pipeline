@@ -29,6 +29,9 @@ export type FollowUpResult =
   | { ok: true; contact: Contact }
   | { ok: false; error: string };
 
+/** Relance due : prévue aujourd'hui, ou en retard si sa date est dépassée. */
+export type DueFollowUp = { contact: Contact; overdue: boolean };
+
 type Dependencies = {
   generateId: () => string;
   /** Date du jour, au format AAAA-MM-JJ. */
@@ -68,6 +71,18 @@ export function createContactService(
 
     getContact(id: string): Promise<Contact | null> {
       return repository.findById(id);
+    },
+
+    /** Relances du jour d'abord, puis celles en retard (de la plus ancienne à la plus récente). */
+    async listDueFollowUps(): Promise<DueFollowUp[]> {
+      const day = today();
+      const due = (await repository.listWithFollowUpDueBy(day))
+        .filter((contact) => !isClosedStage(contact.stage))
+        .map((contact) => ({ contact, overdue: contact.nextFollowUp! < day }));
+      return [
+        ...due.filter((followUp) => !followUp.overdue),
+        ...due.filter((followUp) => followUp.overdue),
+      ];
     },
 
     async addContact(name: string): Promise<AddContactResult> {

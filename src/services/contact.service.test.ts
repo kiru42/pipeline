@@ -34,6 +34,12 @@ function createFakeRepository(initial: Contact[] = []) {
       const index = contacts.findIndex((existing) => existing.id === c.id);
       if (index >= 0) contacts[index] = { ...c };
     },
+    async listWithFollowUpDueBy(date) {
+      return contacts
+        .filter((c) => c.nextFollowUp !== null && c.nextFollowUp <= date)
+        .sort((a, b) => (a.nextFollowUp! < b.nextFollowUp! ? -1 : 1))
+        .map((c) => ({ ...c }));
+    },
   };
   return { repository, writes: () => writes };
 }
@@ -330,6 +336,55 @@ describe("ContactService", () => {
       const result = await service.clearFollowUp("inconnu");
       expect(result).toEqual({ ok: false, error: "Contact introuvable." });
       expect(writes()).toBe(0);
+    });
+  });
+
+  describe("listDueFollowUps", () => {
+    const aujourdhui = contact({ id: "1", name: "Aujourd'hui", nextFollowUp: TODAY });
+    const hier = contact({ id: "2", name: "Hier", nextFollowUp: "2026-11-20" });
+    const avantHier = contact({ id: "3", name: "Avant-hier", nextFollowUp: "2026-11-19" });
+    const demain = contact({ id: "4", name: "Demain", nextFollowUp: "2026-11-22" });
+
+    it("inclut un contact dont la relance est prévue aujourd'hui", async () => {
+      const { service } = setup([aujourdhui]);
+      expect(await service.listDueFollowUps()).toEqual([
+        { contact: aujourdhui, overdue: false },
+      ]);
+    });
+
+    it("inclut un contact dont la relance était prévue hier, marqué en retard", async () => {
+      const { service } = setup([hier]);
+      expect(await service.listDueFollowUps()).toEqual([{ contact: hier, overdue: true }]);
+    });
+
+    it("exclut un contact dont la relance est prévue demain", async () => {
+      const { service } = setup([demain]);
+      expect(await service.listDueFollowUps()).toEqual([]);
+    });
+
+    it("exclut un contact sans relance", async () => {
+      const { service } = setup([marie]);
+      expect(await service.listDueFollowUps()).toEqual([]);
+    });
+
+    it("renvoie une liste vide quand aucune relance n'est due", async () => {
+      const { service } = setup();
+      expect(await service.listDueFollowUps()).toEqual([]);
+    });
+
+    it("place d'abord les relances du jour, puis les retards du plus ancien au plus récent", async () => {
+      const { service } = setup([hier, demain, aujourdhui, avantHier]);
+      const due = await service.listDueFollowUps();
+      expect(due.map((d) => [d.contact.name, d.overdue])).toEqual([
+        ["Aujourd'hui", false],
+        ["Avant-hier", true],
+        ["Hier", true],
+      ]);
+    });
+
+    it("exclut un contact clos", async () => {
+      const { service } = setup([contact({ ...aujourdhui, stage: "gagne" })]);
+      expect(await service.listDueFollowUps()).toEqual([]);
     });
   });
 });

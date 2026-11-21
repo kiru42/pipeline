@@ -26,6 +26,8 @@ export interface ContactRepository {
   findById(id: string): Promise<Contact | null>;
   create(contact: Contact): Promise<void>;
   update(contact: Contact): Promise<void>;
+  /** Contacts dont la relance tombe au plus tard à `date` (AAAA-MM-JJ), de la plus ancienne à la plus récente. */
+  listWithFollowUpDueBy(date: string): Promise<Contact[]>;
 }
 
 const COLUMNS = "id, name, company, email, phone, note, stage, next_follow_up";
@@ -95,6 +97,14 @@ export function createLibsqlContactRepository(client: Client): ContactRepository
           contact.id,
         ],
       });
+    },
+
+    async listWithFollowUpDueBy(date) {
+      const result = await client.execute({
+        sql: `SELECT ${COLUMNS} FROM contacts WHERE next_follow_up IS NOT NULL AND next_follow_up <= ? ORDER BY next_follow_up, rowid`,
+        args: [date],
+      });
+      return result.rows.map(toContact);
     },
   };
 }

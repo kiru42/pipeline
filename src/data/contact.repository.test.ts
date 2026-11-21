@@ -172,6 +172,27 @@ describe("ContactRepository (libsql)", () => {
     });
   });
 
+  describe("listWithFollowUpDueBy", () => {
+    it("renvoie les contacts dont la relance tombe au plus tard à la date donnée, de la plus ancienne à la plus récente", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      const aujourdhui = contact({ id: "1", name: "Aujourd'hui", nextFollowUp: "2026-11-21" });
+      const hier = contact({ id: "2", name: "Hier", nextFollowUp: "2026-11-20" });
+      const demain = contact({ id: "3", name: "Demain", nextFollowUp: "2026-11-22" });
+      const sansRelance = contact({ id: "4", name: "Sans relance" });
+      for (const c of [aujourdhui, hier, demain, sansRelance]) await repository.create(c);
+
+      expect(await repository.listWithFollowUpDueBy("2026-11-21")).toEqual([hier, aujourdhui]);
+      client.close();
+    });
+
+    it("renvoie une liste vide quand aucune relance n'est due", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      await repository.create(contact({ id: "1", name: "Demain", nextFollowUp: "2026-11-22" }));
+      expect(await repository.listWithFollowUpDueBy("2026-11-21")).toEqual([]);
+      client.close();
+    });
+  });
+
   describe("migrate", () => {
     it("met à niveau une base créée au lot 1 sans perdre ses contacts", async () => {
       const url = tempDbUrl();
