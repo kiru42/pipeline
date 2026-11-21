@@ -13,6 +13,7 @@ const marie: Contact = {
   email: null,
   phone: null,
   note: null,
+  stage: "nouveau",
 };
 
 describe("ContactList", () => {
@@ -36,5 +37,17 @@ describe("ContactList", () => {
   it("affiche l'entreprise du contact", () => {
     render(<ContactList contacts={[marie]} />);
     expect(screen.getByText("Acme")).toBeDefined();
+  });
+
+  it("affiche l'étape de chaque contact", () => {
+    render(
+      <ContactList
+        contacts={[marie, { ...marie, id: "2", name: "Alain Martin", stage: "rendez-vous" }]}
+      />,
+    );
+    expect(screen.getByRole("link", { name: /Marie Dupont/ }).textContent).toContain("Nouveau");
+    expect(screen.getByRole("link", { name: /Alain Martin/ }).textContent).toContain(
+      "Rendez-vous",
+    );
   });
 });

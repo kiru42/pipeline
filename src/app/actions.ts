@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import type { AddContactState } from "@/components/contacts/add-contact-form";
 import type { ContactFormState } from "@/components/contacts/contact-form";
+import type { StageSelectorState } from "@/components/contacts/stage-selector";
 import { getContactService } from "@/services/container";
 
 function text(formData: FormData, key: string): string {
@@ -44,4 +45,18 @@ export async function updateContactAction(
     return { errors: result.errors, values };
   }
   return { error: result.error, values };
+}
+
+export async function changeStageAction(
+  id: string,
+  _state: StageSelectorState,
+  stage: string,
+): Promise<StageSelectorState> {
+  const service = await getContactService();
+  const result = await service.changeStage(id, stage);
+  if (!result.ok) {
+    return { error: result.error };
+  }
+  refresh();
+  return {};
 }

@@ -13,6 +13,7 @@ const marie: Contact = {
   email: "marie@acme.fr",
   phone: "06 12 34 56 78",
   note: "Rencontrée au salon",
+  stage: "nouveau",
 };
 
 function valueOf(label: string) {
@@ -39,5 +40,20 @@ describe("ContactDetails", () => {
     for (const label of ["Entreprise", "Email", "Téléphone", "Note"]) {
       expect(valueOf(label)).toBe("Non renseigné");
     }
+  });
+
+  it("affiche l'étape du contact", () => {
+    render(<ContactDetails contact={{ ...marie, stage: "rendez-vous" }} />);
+    expect(valueOf("Étape")).toBe("Rendez-vous");
+    expect(screen.queryByText("Clos")).toBeNull();
+  });
+
+  it.each([
+    ["gagne", "Gagné"],
+    ["perdu", "Perdu"],
+  ] as const)("présente un contact « %s » comme clos", (stage, label) => {
+    render(<ContactDetails contact={{ ...marie, stage }} />);
+    expect(valueOf("Étape")).toBe(label);
+    expect(screen.getByText("Clos")).toBeDefined();
   });
 });

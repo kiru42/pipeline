@@ -1,6 +1,8 @@
 import type { Contact, ContactRepository } from "@/data/contact.repository";
+import { isStage } from "./stages";
 
 export type { Contact };
+export type { Stage, StageInfo } from "./stages";
 
 export type AddContactResult =
   | { ok: true; contact: Contact }
@@ -17,6 +19,10 @@ export type ContactDetailsInput = {
 export type UpdateContactResult =
   | { ok: true; contact: Contact }
   | { ok: false; errors: { email: string } }
+  | { ok: false; error: string };
+
+export type ChangeStageResult =
+  | { ok: true; contact: Contact }
   | { ok: false; error: string };
 
 type Dependencies = { generateId: () => string };
@@ -53,6 +59,7 @@ export function createContactService(
         email: null,
         phone: null,
         note: null,
+        stage: "nouveau",
       };
       await repository.create(contact);
       return { ok: true, contact };
@@ -79,6 +86,19 @@ export function createContactService(
         phone: optional(input.phone),
         note: optional(input.note),
       };
+      await repository.update(contact);
+      return { ok: true, contact };
+    },
+
+    async changeStage(id: string, stage: string): Promise<ChangeStageResult> {
+      if (!isStage(stage)) {
+        return { ok: false, error: "Étape inconnue." };
+      }
+      const existing = await repository.findById(id);
+      if (!existing) {
+        return { ok: false, error: "Contact introuvable." };
+      }
+      const contact: Contact = { ...existing, stage };
       await repository.update(contact);
       return { ok: true, contact };
     },

@@ -13,6 +13,7 @@ const marie: Contact = {
   email: "marie@acme.fr",
   phone: null,
   note: null,
+  stage: "nouveau",
 };
 
 type Action = (state: ContactFormState, formData: FormData) => Promise<ContactFormState>;

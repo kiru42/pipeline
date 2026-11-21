@@ -24,7 +24,14 @@ async function openRepository(url: string) {
 }
 
 function contact(overrides: Partial<Contact> & Pick<Contact, "id" | "name">): Contact {
-  return { company: null, email: null, phone: null, note: null, ...overrides };
+  return {
+    company: null,
+    email: null,
+    phone: null,
+    note: null,
+    stage: "nouveau",
+    ...overrides,
+  };
 }
 
 const marie = contact({ id: "1", name: "Marie Dupont" });
@@ -106,6 +113,36 @@ describe("ContactRepository (libsql)", () => {
 
       const second = await openRepository(url);
       expect(await second.repository.findById("1")).toEqual(marieComplete);
+      second.client.close();
+    });
+  });
+
+  describe("étape", () => {
+    it("enregistre l'étape à la création", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      await repository.create({ ...marie, stage: "contacte" });
+      expect((await repository.findById("1"))?.stage).toBe("contacte");
+      client.close();
+    });
+
+    it("enregistre un changement d'étape, visible dans la liste", async () => {
+      const { client, repository } = await openRepository(":memory:");
+      await repository.create({ ...marie, stage: "contacte" });
+      await repository.update({ ...marie, stage: "rendez-vous" });
+      expect((await repository.findById("1"))?.stage).toBe("rendez-vous");
+      expect((await repository.list())[0].stage).toBe("rendez-vous");
+      client.close();
+    });
+
+    it("conserve la nouvelle étape après un redémarrage", async () => {
+      const url = tempDbUrl();
+      const first = await openRepository(url);
+      await first.repository.create(marie);
+      await first.repository.update({ ...marie, stage: "gagne" });
+      first.client.close();
+
+      const second = await openRepository(url);
+      expect((await second.repository.findById("1"))?.stage).toBe("gagne");
       second.client.close();
     });
   });

@@ -1,5 +1,14 @@
 import type { Client, Row } from "@libsql/client";
 
+/** Étapes du pipeline, telles que stockées en base. */
+export type Stage =
+  | "nouveau"
+  | "contacte"
+  | "rendez-vous"
+  | "proposition"
+  | "gagne"
+  | "perdu";
+
 export type Contact = {
   id: string;
   name: string;
@@ -7,6 +16,7 @@ export type Contact = {
   email: string | null;
   phone: string | null;
   note: string | null;
+  stage: Stage;
 };
 
 export interface ContactRepository {
@@ -16,7 +26,7 @@ export interface ContactRepository {
   update(contact: Contact): Promise<void>;
 }
 
-const COLUMNS = "id, name, company, email, phone, note";
+const COLUMNS = "id, name, company, email, phone, note, stage";
 
 function nullableText(value: Row[string]): string | null {
   return value === null || value === undefined ? null : String(value);
@@ -30,6 +40,7 @@ function toContact(row: Row): Contact {
     email: nullableText(row.email),
     phone: nullableText(row.phone),
     note: nullableText(row.note),
+    stage: String(row.stage) as Stage,
   };
 }
 
@@ -53,7 +64,7 @@ export function createLibsqlContactRepository(client: Client): ContactRepository
 
     async create(contact) {
       await client.execute({
-        sql: `INSERT INTO contacts (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?)`,
+        sql: `INSERT INTO contacts (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         args: [
           contact.id,
           contact.name,
@@ -61,19 +72,21 @@ export function createLibsqlContactRepository(client: Client): ContactRepository
           contact.email,
           contact.phone,
           contact.note,
+          contact.stage,
         ],
       });
     },
 
     async update(contact) {
       await client.execute({
-        sql: "UPDATE contacts SET name = ?, company = ?, email = ?, phone = ?, note = ? WHERE id = ?",
+        sql: "UPDATE contacts SET name = ?, company = ?, email = ?, phone = ?, note = ?, stage = ? WHERE id = ?",
         args: [
           contact.name,
           contact.company,
           contact.email,
           contact.phone,
           contact.note,
+          contact.stage,
           contact.id,
         ],
       });

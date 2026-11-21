@@ -3,7 +3,14 @@ import type { Contact, ContactRepository } from "@/data/contact.repository";
 import { createContactService, type ContactDetailsInput } from "./contact.service";
 
 function contact(overrides: Partial<Contact> & Pick<Contact, "id" | "name">): Contact {
-  return { company: null, email: null, phone: null, note: null, ...overrides };
+  return {
+    company: null,
+    email: null,
+    phone: null,
+    note: null,
+    stage: "nouveau",
+    ...overrides,
+  };
 }
 
 function createFakeRepository(initial: Contact[] = []) {
@@ -69,6 +76,12 @@ describe("ContactService", () => {
       const expected = contact({ id: "id-1", name: "Marie Dupont" });
       expect(result).toEqual({ ok: true, contact: expected });
       expect(await service.listContacts()).toEqual([expected]);
+    });
+
+    it("place le nouveau contact à l'étape « Nouveau »", async () => {
+      const { service } = setup();
+      await service.addContact("Marie Dupont");
+      expect((await service.listContacts())[0].stage).toBe("nouveau");
     });
 
     it("supprime les espaces autour du nom", async () => {
@@ -174,6 +187,46 @@ describe("ContactService", () => {
     it("refuse la mise à jour d'un contact inconnu", async () => {
       const { service, writes } = setup([marie]);
       const result = await service.updateContact("inconnu", details({ company: "Acme" }));
+      expect(result).toEqual({ ok: false, error: "Contact introuvable." });
+      expect(writes()).toBe(0);
+    });
+  });
+
+  describe("changeStage", () => {
+    it("fait passer un contact « Contacté » à « Rendez-vous », dans la fiche et la liste", async () => {
+      const { service } = setup([contact({ ...marie, stage: "contacte" })]);
+      const result = await service.changeStage("1", "rendez-vous");
+      const expected = contact({ ...marie, stage: "rendez-vous" });
+      expect(result).toEqual({ ok: true, contact: expected });
+      expect(await service.getContact("1")).toEqual(expected);
+      expect(await service.listContacts()).toEqual([expected]);
+    });
+
+    it("permet de clore un contact puis de le rouvrir", async () => {
+      const { service } = setup([marie]);
+      await service.changeStage("1", "perdu");
+      expect((await service.getContact("1"))?.stage).toBe("perdu");
+      await service.changeStage("1", "contacte");
+      expect((await service.getContact("1"))?.stage).toBe("contacte");
+    });
+
+    it("ne modifie pas les autres informations du contact", async () => {
+      const complete = contact({ ...marie, company: "Acme", email: "marie@acme.fr" });
+      const { service } = setup([complete]);
+      await service.changeStage("1", "proposition");
+      expect(await service.getContact("1")).toEqual({ ...complete, stage: "proposition" });
+    });
+
+    it("refuse une étape inconnue sans rien enregistrer", async () => {
+      const { service, writes } = setup([marie]);
+      const result = await service.changeStage("1", "archive");
+      expect(result).toEqual({ ok: false, error: "Étape inconnue." });
+      expect(writes()).toBe(0);
+    });
+
+    it("refuse un contact inconnu", async () => {
+      const { service, writes } = setup([marie]);
+      const result = await service.changeStage("inconnu", "contacte");
       expect(result).toEqual({ ok: false, error: "Contact introuvable." });
       expect(writes()).toBe(0);
     });
