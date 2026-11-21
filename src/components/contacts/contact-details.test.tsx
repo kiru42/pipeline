@@ -15,6 +15,7 @@ const marie: Contact = {
   note: "Rencontrée au salon",
   stage: "nouveau",
   nextFollowUp: null,
+  lastContactedAt: null,
 };
 
 function valueOf(label: string) {
@@ -67,5 +68,15 @@ describe("ContactDetails", () => {
     render(<ContactDetails contact={marie} />);
     expect(screen.queryByText(/Relance le/)).toBeNull();
     expect(screen.getByText("Aucune relance planifiée")).toBeDefined();
+  });
+
+  it("affiche la date du dernier contact", () => {
+    render(<ContactDetails contact={{ ...marie, lastContactedAt: "2026-11-21" }} />);
+    expect(screen.getByText("Dernier contact le 21/11")).toBeDefined();
+  });
+
+  it("n'affiche pas de dernier contact quand aucune relance n'a été traitée", () => {
+    render(<ContactDetails contact={marie} />);
+    expect(screen.queryByText(/Dernier contact/)).toBeNull();
   });
 });

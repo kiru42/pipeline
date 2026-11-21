@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import type { CompleteFollowUpState } from "@/components/contacts/complete-follow-up-form";
 import type { AddContactState } from "@/components/contacts/add-contact-form";
 import type { ContactFormState } from "@/components/contacts/contact-form";
 import type { FollowUpFormState } from "@/components/contacts/follow-up-form";
@@ -79,6 +80,20 @@ export async function scheduleFollowUpAction(
 export async function clearFollowUpAction(id: string): Promise<FollowUpFormState> {
   const service = await getContactService();
   const result = await service.clearFollowUp(id);
+  if (!result.ok) {
+    return { error: result.error };
+  }
+  refresh();
+  return {};
+}
+
+export async function completeFollowUpAction(
+  id: string,
+  _state: CompleteFollowUpState,
+  formData: FormData,
+): Promise<CompleteFollowUpState> {
+  const service = await getContactService();
+  const result = await service.completeFollowUp(id, text(formData, "nextDate"));
   if (!result.ok) {
     return { error: result.error };
   }

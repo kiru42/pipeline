@@ -4,7 +4,7 @@ import { AddContactForm } from "@/components/contacts/add-contact-form";
 import { ContactList } from "@/components/contacts/contact-list";
 import { DueFollowUps } from "@/components/contacts/due-follow-ups";
 import { getContactService } from "@/services/container";
-import { addContactAction } from "./actions";
+import { addContactAction, completeFollowUpAction } from "./actions";
 
 function Loading() {
   return <p className="text-sm text-muted-foreground">Chargement…</p>;
@@ -15,7 +15,7 @@ async function TodayFollowUps() {
   await connection();
   const service = await getContactService();
   const followUps = await service.listDueFollowUps();
-  return <DueFollowUps followUps={followUps} />;
+  return <DueFollowUps followUps={followUps} complete={completeFollowUpAction} />;
 }
 
 async function Contacts() {

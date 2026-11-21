@@ -31,6 +31,7 @@ function contact(overrides: Partial<Contact> & Pick<Contact, "id" | "name">): Co
     note: null,
     stage: "nouveau",
     nextFollowUp: null,
+    lastContactedAt: null,
     ...overrides,
   };
 }
@@ -168,6 +169,23 @@ describe("ContactRepository (libsql)", () => {
 
       const second = await openRepository(url);
       expect((await second.repository.findById("1"))?.nextFollowUp).toBe("2026-11-25");
+      second.client.close();
+    });
+  });
+
+  describe("dernier contact", () => {
+    it("enregistre la date du dernier contact et la conserve après un redémarrage", async () => {
+      const url = tempDbUrl();
+      const first = await openRepository(url);
+      await first.repository.create({ ...marie, nextFollowUp: "2026-11-21" });
+      await first.repository.update({ ...marie, nextFollowUp: null, lastContactedAt: "2026-11-21" });
+      first.client.close();
+
+      const second = await openRepository(url);
+      const found = await second.repository.findById("1");
+      expect(found?.lastContactedAt).toBe("2026-11-21");
+      expect(found?.nextFollowUp).toBeNull();
+      expect(await second.repository.listWithFollowUpDueBy("2026-11-21")).toEqual([]);
       second.client.close();
     });
   });

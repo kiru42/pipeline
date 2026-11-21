@@ -3,8 +3,22 @@ import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
 import { formatDay } from "@/lib/dates";
 import type { DueFollowUp } from "@/services/contact.service";
+import {
+  CompleteFollowUpForm,
+  type CompleteFollowUpState,
+} from "./complete-follow-up-form";
 
-export function DueFollowUps({ followUps }: { followUps: DueFollowUp[] }) {
+type Props = {
+  followUps: DueFollowUp[];
+  /** Marque faite la relance du contact `id`, avec une nouvelle date facultative (`nextDate`). */
+  complete: (
+    id: string,
+    state: CompleteFollowUpState,
+    formData: FormData,
+  ) => Promise<CompleteFollowUpState>;
+};
+
+export function DueFollowUps({ followUps, complete }: Props) {
   return (
     <section className="flex flex-col gap-3" aria-labelledby="due-follow-ups-title">
       <h2 id="due-follow-ups-title" className="text-lg font-semibold text-foreground">
@@ -35,6 +49,10 @@ export function DueFollowUps({ followUps }: { followUps: DueFollowUp[] }) {
                   <span>prévue le {formatDay(contact.nextFollowUp)}</span>
                 </span>
               )}
+              <CompleteFollowUpForm
+                contactId={contact.id}
+                action={complete.bind(null, contact.id)}
+              />
             </li>
           ))}
         </ul>

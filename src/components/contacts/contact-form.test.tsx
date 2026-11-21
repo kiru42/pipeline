@@ -15,6 +15,7 @@ const marie: Contact = {
   note: null,
   stage: "nouveau",
   nextFollowUp: null,
+  lastContactedAt: null,
 };
 
 type Action = (state: ContactFormState, formData: FormData) => Promise<ContactFormState>;

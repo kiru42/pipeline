@@ -15,6 +15,7 @@ const marie: Contact = {
   note: null,
   stage: "contacte",
   nextFollowUp: null,
+  lastContactedAt: null,
 };
 
 type Schedule = (state: FollowUpFormState, formData: FormData) => Promise<FollowUpFormState>;

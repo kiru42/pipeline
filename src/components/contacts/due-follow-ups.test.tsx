@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Contact } from "@/services/contact.service";
-import { DueFollowUps } from "./due-follow-ups";
+import type { CompleteFollowUpState } from "./complete-follow-up-form";
+import { DueFollowUps as DueFollowUpsView } from "./due-follow-ups";
 
 afterEach(cleanup);
 
@@ -16,11 +17,24 @@ function contact(id: string, name: string, nextFollowUp: string): Contact {
     note: null,
     stage: "contacte",
     nextFollowUp,
+    lastContactedAt: null,
   };
 }
 
 const marie = contact("1", "Marie Dupont", "2026-11-21");
 const alain = contact("2", "Alain Martin", "2026-11-20");
+
+type Complete = (
+  id: string,
+  state: CompleteFollowUpState,
+  formData: FormData,
+) => Promise<CompleteFollowUpState>;
+
+const noop = vi.fn<Complete>(async () => ({}));
+
+function DueFollowUps(props: Omit<Parameters<typeof DueFollowUpsView>[0], "complete">) {
+  return <DueFollowUpsView complete={noop} {...props} />;
+}
 
 function item(name: string) {
   return screen.getByText(name).closest("li") as HTMLElement;
@@ -75,5 +89,45 @@ describe("DueFollowUps", () => {
     render(<DueFollowUps followUps={[]} />);
     expect(screen.getByText("Rien à faire aujourd'hui.")).toBeDefined();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("marque une relance comme faite avec une nouvelle date", async () => {
+    const complete = vi.fn<Complete>(async () => ({}));
+    render(
+      <DueFollowUpsView
+        followUps={[
+          { contact: marie, overdue: false },
+          { contact: alain, overdue: true },
+        ]}
+        complete={complete}
+      />,
+    );
+    const row = item("Alain Martin");
+    fireEvent.change(within(row).getByLabelText("Nouvelle relance"), {
+      target: { value: "2026-11-28" },
+    });
+    fireEvent.click(within(row).getByRole("button", { name: "Fait" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    const [id, , formData] = complete.mock.calls[0];
+    expect(id).toBe("2");
+    expect(formData.get("nextDate")).toBe("2026-11-28");
+  });
+
+  it("marque une relance comme faite sans nouvelle date", async () => {
+    const complete = vi.fn<Complete>(async () => ({}));
+    render(<DueFollowUpsView followUps={[{ contact: marie, overdue: false }]} complete={complete} />);
+    fireEvent.click(screen.getByRole("button", { name: "Fait" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    expect(complete.mock.calls[0][2].get("nextDate")).toBe("");
+  });
+
+  it("affiche le refus renvoyé par l'action", async () => {
+    const complete = vi.fn<Complete>(async () => ({
+      error: "La nouvelle relance doit être postérieure à aujourd'hui.",
+    }));
+    render(<DueFollowUpsView followUps={[{ contact: marie, overdue: false }]} complete={complete} />);
+    fireEvent.click(screen.getByRole("button", { name: "Fait" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe("La nouvelle relance doit être postérieure à aujourd'hui.");
   });
 });

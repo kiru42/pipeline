@@ -22,6 +22,12 @@ export function ContactDetails({ contact }: { contact: Contact }) {
         {contact.nextFollowUp
           ? `Relance le ${formatDay(contact.nextFollowUp)}`
           : "Aucune relance planifiée"}
+        {contact.lastContactedAt && (
+          <>
+            <span aria-hidden="true"> · </span>
+            <span>Dernier contact le {formatDay(contact.lastContactedAt)}</span>
+          </>
+        )}
       </p>
       <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
         <dt className="text-muted-foreground">Étape</dt>

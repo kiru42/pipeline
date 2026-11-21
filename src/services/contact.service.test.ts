@@ -10,6 +10,7 @@ function contact(overrides: Partial<Contact> & Pick<Contact, "id" | "name">): Co
     note: null,
     stage: "nouveau",
     nextFollowUp: null,
+    lastContactedAt: null,
     ...overrides,
   };
 }
@@ -385,6 +386,76 @@ describe("ContactService", () => {
     it("exclut un contact clos", async () => {
       const { service } = setup([contact({ ...aujourdhui, stage: "gagne" })]);
       expect(await service.listDueFollowUps()).toEqual([]);
+    });
+  });
+
+  describe("completeFollowUp", () => {
+    const due = contact({ ...marie, stage: "contacte", nextFollowUp: TODAY });
+
+    it("marque la relance faite et replanifie à la nouvelle date : le contact sort des relances du jour", async () => {
+      const { service } = setup([due]);
+      const result = await service.completeFollowUp("1", "2026-11-28");
+      const expected = { ...due, nextFollowUp: "2026-11-28", lastContactedAt: TODAY };
+      expect(result).toEqual({ ok: true, contact: expected });
+      expect(await service.listDueFollowUps()).toEqual([]);
+      expect(await service.getContact("1")).toEqual(expected);
+    });
+
+    it.each(["", "   "])(
+      "marque la relance faite sans nouvelle date (« %s ») : plus de relance",
+      async (nextDate) => {
+        const { service } = setup([due]);
+        const result = await service.completeFollowUp("1", nextDate);
+        expect(result).toEqual({
+          ok: true,
+          contact: { ...due, nextFollowUp: null, lastContactedAt: TODAY },
+        });
+        expect(await service.listDueFollowUps()).toEqual([]);
+      },
+    );
+
+    it("traite aussi une relance en retard", async () => {
+      const { service } = setup([contact({ ...due, nextFollowUp: "2026-11-18" })]);
+      const result = await service.completeFollowUp("1", "");
+      expect(result.ok).toBe(true);
+      expect(await service.listDueFollowUps()).toEqual([]);
+    });
+
+    it.each([TODAY, "2026-11-20"])(
+      "refuse une nouvelle date qui n'est pas postérieure à aujourd'hui (%s)",
+      async (nextDate) => {
+        const { service, writes } = setup([due]);
+        const result = await service.completeFollowUp("1", nextDate);
+        expect(result).toEqual({
+          ok: false,
+          error: "La nouvelle relance doit être postérieure à aujourd'hui.",
+        });
+        expect(writes()).toBe(0);
+      },
+    );
+
+    it("refuse une nouvelle date invalide", async () => {
+      const { service, writes } = setup([due]);
+      const result = await service.completeFollowUp("1", "2026-02-30");
+      expect(result).toEqual({ ok: false, error: "La date n'est pas valide." });
+      expect(writes()).toBe(0);
+    });
+
+    it.each([
+      ["sans relance", null],
+      ["dont la relance est à venir", "2026-11-22"],
+    ])("refuse de traiter un contact %s", async (_label, nextFollowUp) => {
+      const { service, writes } = setup([contact({ ...due, nextFollowUp })]);
+      const result = await service.completeFollowUp("1", "");
+      expect(result).toEqual({ ok: false, error: "Aucune relance due pour ce contact." });
+      expect(writes()).toBe(0);
+    });
+
+    it("refuse un contact inconnu", async () => {
+      const { service, writes } = setup([due]);
+      const result = await service.completeFollowUp("inconnu", "");
+      expect(result).toEqual({ ok: false, error: "Contact introuvable." });
+      expect(writes()).toBe(0);
     });
   });
 });

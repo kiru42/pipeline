@@ -38,6 +38,10 @@ const MIGRATIONS: { version: number; statements: string[] }[] = [
     version: 4,
     statements: ["ALTER TABLE contacts ADD COLUMN next_follow_up TEXT"],
   },
+  {
+    version: 5,
+    statements: ["ALTER TABLE contacts ADD COLUMN last_contacted_at TEXT"],
+  },
 ];
 
 export async function migrate(client: Client): Promise<void> {
