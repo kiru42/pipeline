@@ -11,10 +11,45 @@ export function createDbClient(config?: DbConfig): Client {
   });
 }
 
+/** Migrations numérotées, appliquées une seule fois et dans l'ordre. Ne jamais modifier une migration déjà livrée. */
+const MIGRATIONS: { version: number; statements: string[] }[] = [
+  {
+    version: 1,
+    statements: [
+      "CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, name TEXT NOT NULL)",
+    ],
+  },
+  {
+    version: 2,
+    statements: [
+      "ALTER TABLE contacts ADD COLUMN company TEXT",
+      "ALTER TABLE contacts ADD COLUMN email TEXT",
+      "ALTER TABLE contacts ADD COLUMN phone TEXT",
+      "ALTER TABLE contacts ADD COLUMN note TEXT",
+    ],
+  },
+];
+
 export async function migrate(client: Client): Promise<void> {
   await client.execute(
-    "CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, name TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY)",
   );
+  const applied = await client.execute("SELECT version FROM schema_migrations");
+  const done = new Set(applied.rows.map((row) => Number(row.version)));
+
+  for (const migration of MIGRATIONS) {
+    if (done.has(migration.version)) continue;
+    await client.batch(
+      [
+        ...migration.statements,
+        {
+          sql: "INSERT INTO schema_migrations (version) VALUES (?)",
+          args: [migration.version],
+        },
+      ],
+      "write",
+    );
+  }
 }
 
 let db: Promise<Client> | undefined;
