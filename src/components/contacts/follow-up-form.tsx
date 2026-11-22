@@ -3,7 +3,7 @@
 import { startTransition, useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import type { Contact } from "@/services/contact.service";
 import { getStage } from "@/services/stages";
 
@@ -22,8 +22,8 @@ export function FollowUpForm({ contact, schedule, clear }: Props) {
   const error = scheduleState.error ?? clearState.error;
 
   return (
-    <section className="flex flex-col gap-2" aria-labelledby="follow-up-title">
-      <h2 id="follow-up-title" className="text-sm font-medium text-foreground">
+    <section className="flex flex-col gap-3" aria-labelledby="follow-up-title">
+      <h2 id="follow-up-title" className="text-base font-semibold text-foreground">
         Prochaine relance
       </h2>
       {getStage(contact.stage).closed ? (
@@ -31,37 +31,35 @@ export function FollowUpForm({ contact, schedule, clear }: Props) {
           Un contact clos ne peut pas avoir de relance.
         </p>
       ) : (
-        <form action={scheduleAction} className="flex flex-col gap-2">
-          <Label htmlFor="follow-up-date">Date de relance</Label>
-          <div className="flex flex-wrap gap-2">
-            <Input
-              id="follow-up-date"
-              name="date"
-              type="date"
-              className="w-auto"
-              defaultValue={contact.nextFollowUp ?? ""}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? "follow-up-error" : undefined}
-            />
-            <Button type="submit" disabled={pending}>
-              Planifier
-            </Button>
-            {contact.nextFollowUp && (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pending}
-                onClick={() => startTransition(() => clearAction())}
-              >
-                Supprimer la relance
+        <form action={scheduleAction}>
+          <Field data-invalid={error ? true : undefined}>
+            <FieldLabel htmlFor="follow-up-date">Date de relance</FieldLabel>
+            <div className="flex flex-wrap gap-2">
+              <Input
+                id="follow-up-date"
+                name="date"
+                type="date"
+                className="w-auto font-mono"
+                defaultValue={contact.nextFollowUp ?? ""}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "follow-up-error" : undefined}
+              />
+              <Button type="submit" disabled={pending}>
+                Planifier
               </Button>
-            )}
-          </div>
-          {error && (
-            <p id="follow-up-error" role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
+              {contact.nextFollowUp && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={pending}
+                  onClick={() => startTransition(() => clearAction())}
+                >
+                  Supprimer la relance
+                </Button>
+              )}
+            </div>
+            {error && <FieldError id="follow-up-error">{error}</FieldError>}
+          </Field>
         </form>
       )}
     </section>

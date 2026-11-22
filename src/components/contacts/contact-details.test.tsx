@@ -18,35 +18,17 @@ const marie: Contact = {
   lastContactedAt: null,
 };
 
-function valueOf(label: string) {
-  const term = screen.getByText(label, { selector: "dt" });
-  return term.nextElementSibling?.textContent;
-}
-
-describe("ContactDetails", () => {
-  it("affiche les informations actuelles du contact", () => {
+describe("ContactDetails (en-tête de la fiche)", () => {
+  it("affiche les initiales, le nom et l'entreprise du contact", () => {
     render(<ContactDetails contact={marie} />);
-    expect(screen.getByRole("heading", { name: "Marie Dupont" })).toBeDefined();
-    expect(valueOf("Entreprise")).toBe("Acme");
-    expect(valueOf("Email")).toBe("marie@acme.fr");
-    expect(valueOf("Téléphone")).toBe("06 12 34 56 78");
-    expect(valueOf("Note")).toBe("Rencontrée au salon");
+    expect(screen.getByRole("heading", { level: 1, name: "Marie Dupont" })).toBeDefined();
+    expect(screen.getByText("MD")).toBeDefined();
+    expect(screen.getByText("Acme")).toBeDefined();
   });
 
-  it("indique les champs non renseignés", () => {
-    render(
-      <ContactDetails
-        contact={{ ...marie, company: null, email: null, phone: null, note: null }}
-      />,
-    );
-    for (const label of ["Entreprise", "Email", "Téléphone", "Note"]) {
-      expect(valueOf(label)).toBe("Non renseigné");
-    }
-  });
-
-  it("affiche l'étape du contact", () => {
+  it("affiche l'étape du contact avec son badge coloré", () => {
     render(<ContactDetails contact={{ ...marie, stage: "negociation" }} />);
-    expect(valueOf("Étape")).toBe("Négociation");
+    expect(screen.getByText("Négociation").className).toContain("bg-stage-negociation");
     expect(screen.queryByText("Clos")).toBeNull();
   });
 
@@ -55,7 +37,7 @@ describe("ContactDetails", () => {
     ["perdu", "Perdu"],
   ] as const)("présente un contact « %s » comme clos", (stage, label) => {
     render(<ContactDetails contact={{ ...marie, stage }} />);
-    expect(valueOf("Étape")).toBe(label);
+    expect(screen.getByText(label)).toBeDefined();
     expect(screen.getByText("Clos")).toBeDefined();
   });
 

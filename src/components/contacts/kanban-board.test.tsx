@@ -78,8 +78,8 @@ describe("KanbanBoard", () => {
       "Signé",
       "Perdu",
     ]);
-    expect(within(column("Échange")).getByText("1", { selector: "[data-slot=badge]" })).toBeDefined();
-    expect(within(column("Négociation")).getByText("0", { selector: "[data-slot=badge]" })).toBeDefined();
+    expect(within(column("Échange")).getByText("1 contact")).toBeDefined();
+    expect(within(column("Négociation")).getByText("0 contact")).toBeDefined();
   });
 
   it("range chaque contact dans la colonne de son étape", () => {
@@ -106,7 +106,8 @@ describe("KanbanBoard", () => {
 
   it("affiche un message dans une colonne vide", () => {
     render(<KanbanBoard pipeline={pipeline([{ contact: sam }])} move={vi.fn<Move>()} />);
-    expect(within(column("Premier contact")).getByText("Aucun contact · déposez-en un ici")).toBeDefined();
+    const empty = within(column("Premier contact")).getByText("Aucun contact · déposez-en un ici");
+    expect(empty.closest("[data-slot=empty]")).not.toBeNull();
     expect(within(column("Échange")).queryByText("Aucun contact · déposez-en un ici")).toBeNull();
   });
 
@@ -142,7 +143,9 @@ describe("KanbanBoard", () => {
     const move = vi.fn<Move>(async () => ({ error }));
     render(<KanbanBoard pipeline={pipeline([{ contact: sam }])} move={move} />);
     drop("2", "negociation");
-    expect((await screen.findByRole("alert")).textContent).toBe(error);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe(error);
+    expect(alert.getAttribute("data-slot")).toBe("alert");
     expect(within(column("Échange")).getByText("Sam Durand")).toBeDefined();
     expect(within(column("Négociation")).queryByText("Sam Durand")).toBeNull();
   });
@@ -167,5 +170,32 @@ describe("KanbanBoard", () => {
       const instructions = document.getElementById(card.getAttribute("aria-describedby")!);
       expect(instructions?.textContent).toMatch(/Espace/);
     }
+  });
+
+  it("affiche en tête de colonne le badge coloré de l'étape", () => {
+    render(<KanbanBoard pipeline={pipeline([])} move={vi.fn<Move>()} />);
+    expect(within(column("Négociation")).getByText("Négociation").className).toContain(
+      "bg-stage-negociation",
+    );
+  });
+
+  it("distingue une échéance aujourd'hui, en retard ou plus tard", () => {
+    const today = contact("5", "Aujourd'hui", "echange");
+    const late = contact("6", "En retard", "echange");
+    const later = contact("7", "Plus tard", "echange");
+    render(
+      <KanbanBoard
+        pipeline={pipeline([
+          { contact: today, followUpInDays: 0 },
+          { contact: late, followUpInDays: -2 },
+          { contact: later, followUpInDays: 3 },
+        ])}
+        move={vi.fn<Move>()}
+      />,
+    );
+    expect(screen.getByText("aujourd'hui").className).toContain("bg-highlight");
+    expect(screen.getByText("en retard de 2 j").className).toContain("text-destructive");
+    expect(screen.getByText("dans 3 j").className).toContain("text-muted-foreground");
+    expect(screen.getByText("dans 3 j").className).not.toContain("bg-highlight");
   });
 });

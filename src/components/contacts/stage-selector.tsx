@@ -1,8 +1,9 @@
 "use client";
 
 import { startTransition, useActionState } from "react";
-import { Button } from "@/components/ui/button";
-import { getStage, type Stage } from "@/services/stages";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { STAGES, type Stage } from "@/services/stages";
 
 export type StageSelectorState = { error?: string };
 
@@ -17,33 +18,40 @@ export function StageSelector({ stage, allowed, action }: Props) {
   const [state, dispatch, pending] = useActionState(action, {});
 
   return (
-    <section className="flex flex-col gap-2" aria-labelledby="stage-selector-title">
-      <h2 id="stage-selector-title" className="text-sm font-medium text-foreground">
-        Changer d&apos;étape
+    <section className="flex flex-col gap-2.5" aria-labelledby="stage-selector-title">
+      <h2 id="stage-selector-title" className="text-sm font-medium text-muted-foreground">
+        Étape
       </h2>
-      <p className="text-sm text-muted-foreground">Étape actuelle : {getStage(stage).label}</p>
-      {allowed.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Cette étape est définitive.</p>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {allowed.map((candidate) => (
-            <Button
-              key={candidate}
-              type="button"
-              size="sm"
-              variant={candidate === "perdu" ? "outline" : "default"}
-              disabled={pending}
-              onClick={() => startTransition(() => dispatch(candidate))}
-            >
-              {getStage(candidate).label}
-            </Button>
-          ))}
-        </div>
-      )}
+      <ToggleGroup
+        aria-labelledby="stage-selector-title"
+        value={[stage]}
+        onValueChange={(value) => {
+          const next = value[0];
+          if (next && next !== stage) startTransition(() => dispatch(next));
+        }}
+        spacing={1}
+        className="grid w-full grid-cols-2 rounded-lg bg-muted p-1 sm:grid-cols-6"
+      >
+        {STAGES.map((candidate) => (
+          <ToggleGroupItem
+            key={candidate.id}
+            value={candidate.id}
+            disabled={pending || !allowed.includes(candidate.id)}
+            className="h-9 w-full text-muted-foreground data-pressed:bg-card data-pressed:font-semibold data-pressed:text-foreground data-pressed:opacity-100 data-pressed:shadow-xs"
+          >
+            {candidate.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+      <p className="text-sm text-muted-foreground">
+        {allowed.length === 0
+          ? "Cette étape est définitive."
+          : "Signé et Perdu closent le contact : il sort des relances."}
+      </p>
       {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
       )}
     </section>
   );

@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export type CompleteFollowUpState = { error?: string };
 
@@ -18,26 +18,26 @@ export function CompleteFollowUpForm({ contactId, action }: Props) {
   const errorId = `${inputId}-error`;
 
   return (
-    <form action={formAction} className="flex w-full flex-col gap-1">
-      <div className="flex flex-wrap items-center gap-2">
-        <Label htmlFor={inputId}>Nouvelle relance</Label>
-        <Input
-          id={inputId}
-          name="nextDate"
-          type="date"
-          className="w-auto bg-background text-foreground"
-          aria-invalid={state.error ? true : undefined}
-          aria-describedby={state.error ? errorId : undefined}
-        />
+    <form action={formAction} className="flex flex-col items-end gap-1">
+      <div className="flex items-center gap-2">
+        <Field className="w-auto">
+          <FieldLabel htmlFor={inputId} className="sr-only">
+            Prochaine relance
+          </FieldLabel>
+          <Input
+            id={inputId}
+            name="nextDate"
+            type="date"
+            className="h-7 w-auto bg-card font-mono text-xs text-foreground"
+            aria-invalid={state.error ? true : undefined}
+            aria-describedby={state.error ? errorId : undefined}
+          />
+        </Field>
         <Button type="submit" size="sm" disabled={pending}>
           Fait
         </Button>
       </div>
-      {state.error && (
-        <p id={errorId} role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {state.error && <FieldError id={errorId}>{state.error}</FieldError>}
     </form>
   );
 }
