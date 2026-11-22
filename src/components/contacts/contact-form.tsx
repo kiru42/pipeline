@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Contact, ContactDetailsInput } from "@/services/contact.service";
 
@@ -13,69 +14,85 @@ export type ContactFormState = {
   values?: ContactDetailsInput;
 };
 
+type Action = (state: ContactFormState, formData: FormData) => Promise<ContactFormState>;
+
 type Props = {
   contact: Contact;
-  action: (state: ContactFormState, formData: FormData) => Promise<ContactFormState>;
+  action: Action;
+  /** Appelé après un enregistrement accepté. */
+  onSaved?: () => void;
+  /** Affiche un bouton « Annuler » qui appelle cette fonction. */
+  onCancel?: () => void;
 };
 
-export function ContactForm({ contact, action }: Props) {
-  const [state, formAction, pending] = useActionState(action, {});
+export function ContactForm({ contact, action, onSaved, onCancel }: Props) {
+  const [state, formAction, pending] = useActionState<ContactFormState, FormData>(
+    async (previous, formData) => {
+      const result = await action(previous, formData);
+      if (!result.error && !result.errors) onSaved?.();
+      return result;
+    },
+    {},
+  );
   const value = (key: keyof ContactDetailsInput) =>
     state.values?.[key] ?? contact[key] ?? "";
   const emailError = state.errors?.email;
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="contact-company">Entreprise</Label>
-        <Input id="contact-company" name="company" defaultValue={value("company")} />
-      </div>
+      <FieldGroup className="gap-4">
+        <Field>
+          <FieldLabel htmlFor="contact-company">Entreprise</FieldLabel>
+          <Input id="contact-company" name="company" defaultValue={value("company")} />
+        </Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="contact-email">Email</Label>
-        <Input
-          id="contact-email"
-          name="email"
-          type="text"
-          inputMode="email"
-          autoComplete="off"
-          defaultValue={value("email")}
-          aria-invalid={emailError ? true : undefined}
-          aria-describedby={emailError ? "contact-email-error" : undefined}
-        />
-        {emailError && (
-          <p id="contact-email-error" role="alert" className="text-sm text-destructive">
-            {emailError}
-          </p>
-        )}
-      </div>
+        <Field data-invalid={emailError ? true : undefined}>
+          <FieldLabel htmlFor="contact-email">Email</FieldLabel>
+          <Input
+            id="contact-email"
+            name="email"
+            type="text"
+            inputMode="email"
+            autoComplete="off"
+            defaultValue={value("email")}
+            aria-invalid={emailError ? true : undefined}
+            aria-describedby={emailError ? "contact-email-error" : undefined}
+          />
+          {emailError && <FieldError id="contact-email-error">{emailError}</FieldError>}
+        </Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="contact-phone">Téléphone</Label>
-        <Input
-          id="contact-phone"
-          name="phone"
-          type="tel"
-          autoComplete="off"
-          defaultValue={value("phone")}
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="contact-phone">Téléphone</FieldLabel>
+          <Input
+            id="contact-phone"
+            name="phone"
+            type="tel"
+            autoComplete="off"
+            defaultValue={value("phone")}
+          />
+        </Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="contact-note">Note</Label>
-        <Textarea id="contact-note" name="note" defaultValue={value("note")} />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="contact-note">Note</FieldLabel>
+          <Textarea id="contact-note" name="note" defaultValue={value("note")} />
+        </Field>
+      </FieldGroup>
 
       {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
       )}
 
-      <div>
+      <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
           Enregistrer
         </Button>
+        {onCancel && (
+          <Button type="button" variant="outline" disabled={pending} onClick={onCancel}>
+            Annuler
+          </Button>
+        )}
       </div>
     </form>
   );

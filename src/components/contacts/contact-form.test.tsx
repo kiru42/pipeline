@@ -66,8 +66,18 @@ describe("ContactForm", () => {
 
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe("L'email n'est pas valide.");
+    expect(alert.getAttribute("data-slot")).toBe("field-error");
     expect(input("Email").getAttribute("aria-invalid")).toBe("true");
     await waitFor(() => expect(input("Email").value).toBe("marie@"));
     expect(input("Entreprise").value).toBe("Globex");
+  });
+
+  it("affiche une erreur générale dans une Alert", async () => {
+    const action = vi.fn<Action>(async () => ({ error: "Contact introuvable." }));
+    render(<ContactForm contact={marie} action={action} />);
+    fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.getAttribute("data-slot")).toBe("alert");
+    expect(alert.textContent).toBe("Contact introuvable.");
   });
 });

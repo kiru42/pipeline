@@ -1,52 +1,47 @@
 import { Badge } from "@/components/ui/badge";
 import { formatDay } from "@/lib/dates";
+import { initials } from "@/lib/initials";
 import type { Contact } from "@/services/contact.service";
 import { getStage } from "@/services/stages";
+import { StageBadge } from "./stage-badge";
 
-const FIELDS = [
-  ["Entreprise", "company"],
-  ["Email", "email"],
-  ["Téléphone", "phone"],
-  ["Note", "note"],
-] as const;
-
+/** En-tête de la fiche : initiales, nom, étape, entreprise, relance et dernier contact. */
 export function ContactDetails({ contact }: { contact: Contact }) {
-  const stage = getStage(contact.stage);
+  const closed = getStage(contact.stage).closed;
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold text-foreground">{contact.name}</h1>
-        {stage.closed && <Badge variant="secondary">Clos</Badge>}
+    <header className="flex items-center gap-4">
+      <div
+        aria-hidden="true"
+        className="grid size-14 shrink-0 place-items-center rounded-lg bg-secondary text-xl font-semibold text-secondary-foreground"
+      >
+        {initials(contact.name)}
       </div>
-      <p className="text-sm text-muted-foreground">
-        {contact.nextFollowUp
-          ? `Relance le ${formatDay(contact.nextFollowUp)}`
-          : "Aucune relance planifiée"}
-        {contact.lastContactedAt && (
-          <>
-            <span aria-hidden="true"> · </span>
-            <span>Dernier contact le {formatDay(contact.lastContactedAt)}</span>
-          </>
-        )}
-      </p>
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
-        <dt className="text-muted-foreground">Étape</dt>
-        <dd className="text-foreground">{stage.label}</dd>
-        {FIELDS.map(([label, key]) => (
-          <div key={key} className="contents">
-            <dt className="text-muted-foreground">{label}</dt>
-            <dd
-              className={
-                contact[key]
-                  ? "whitespace-pre-line text-foreground"
-                  : "text-muted-foreground italic"
-              }
-            >
-              {contact[key] ?? "Non renseigné"}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{contact.name}</h1>
+          <StageBadge stage={contact.stage} />
+          {closed && <Badge variant="secondary">Clos</Badge>}
+        </div>
+        <p className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
+          {contact.company && (
+            <>
+              <span>{contact.company}</span>
+              <span aria-hidden="true">·</span>
+            </>
+          )}
+          <span>
+            {contact.nextFollowUp
+              ? `Relance le ${formatDay(contact.nextFollowUp)}`
+              : "Aucune relance planifiée"}
+          </span>
+          {contact.lastContactedAt && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>Dernier contact le {formatDay(contact.lastContactedAt)}</span>
+            </>
+          )}
+        </p>
+      </div>
+    </header>
   );
 }

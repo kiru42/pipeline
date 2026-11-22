@@ -22,14 +22,14 @@ import {
   type UniqueIdentifier,
 } from "@dnd-kit/core";
 import { GripVertical, Plus } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
 import { formatDueIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { Pipeline, PipelineCard, PipelineColumn } from "@/services/contact.service";
-import type { StageInfo } from "@/services/stages";
+import { StageBadge } from "./stage-badge";
 import type { StageSelectorState } from "./stage-selector";
 
 type Props = {
@@ -41,19 +41,11 @@ type Props = {
 const INSTRUCTIONS =
   "Pour déplacer une carte, appuyez sur Espace, choisissez la colonne avec les flèches gauche et droite, puis appuyez de nouveau sur Espace pour la déposer, ou sur Échap pour annuler.";
 
-/** Couleur de la pastille d'une étape : en cours, signée ou perdue. */
-function dotClass(stage: StageInfo): string {
-  if (!stage.closed) return "bg-primary";
-  return stage.id === "perdu" ? "bg-destructive" : "bg-success";
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]!.toUpperCase())
-    .join("");
+/** Style de l'échéance : aujourd'hui en évidence, en retard en rouge, plus tard discrète. */
+function dueClass(days: number): string {
+  if (days === 0) return "bg-highlight text-highlight-foreground";
+  if (days < 0) return "bg-destructive/10 text-destructive";
+  return "text-muted-foreground";
 }
 
 /** Avec la souris, la colonne sous le pointeur ; au clavier (pas de pointeur), celle que la carte recouvre. */
@@ -158,9 +150,9 @@ export function KanbanBoard({ pipeline, move }: Props) {
       </p>
 
       {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       <DndContext
@@ -196,22 +188,27 @@ function KanbanColumn({ column, children }: { column: PipelineColumn; children: 
       ref={setNodeRef}
       aria-label={column.stage.label}
       className={cn(
-        "flex w-72 shrink-0 flex-col gap-3 rounded-xl border border-border bg-muted/40 p-3 transition-colors",
-        column.stage.id === "perdu" && "bg-destructive/5",
-        isOver && "border-ring bg-accent",
+        "flex min-h-80 w-64 shrink-0 flex-col gap-2 rounded-xl bg-muted p-2 ring-ring/50 transition-shadow",
+        isOver && "ring-3",
       )}
     >
-      <div className="flex items-center justify-between gap-2 px-1">
-        <h2 id={titleId} className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <span className={cn("size-2 rounded-full", dotClass(column.stage))} aria-hidden />
-          {column.stage.label}
+      <div className="flex items-center justify-between gap-2 px-1.5 pt-1.5 pb-1">
+        <h2 id={titleId} className="text-sm font-semibold">
+          <StageBadge stage={column.stage.id} />
         </h2>
-        <Badge variant="secondary">{column.count}</Badge>
+        <span className="font-mono text-xs text-muted-foreground tabular-nums">
+          <span aria-hidden="true">{column.count}</span>
+          <span className="sr-only">
+            {column.count} {column.count > 1 ? "contacts" : "contact"}
+          </span>
+        </span>
       </div>
       {column.cards.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
-          Aucun contact · déposez-en un ici
-        </p>
+        <Empty className="flex-none border border-dashed border-border p-4">
+          <EmptyHeader>
+            <EmptyDescription>Aucun contact · déposez-en un ici</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <ul className="flex flex-col gap-2" aria-labelledby={titleId}>
           {children}
@@ -253,11 +250,8 @@ function DraggableCard({ card }: { card: PipelineCard }) {
 function CardContent({ card, handle }: { card: PipelineCard; handle?: ReactNode }) {
   const { contact, followUpInDays } = card;
   return (
-    <Card className="flex cursor-grab flex-col gap-2 p-3 active:cursor-grabbing">
-      <div className="flex items-center gap-3">
-        <Avatar>
-          <AvatarFallback>{initials(contact.name)}</AvatarFallback>
-        </Avatar>
+    <Card className="flex cursor-grab flex-col gap-1.5 p-3 shadow-xs active:cursor-grabbing">
+      <div className="flex items-start gap-2">
         <div className="flex min-w-0 flex-1 flex-col">
           <Link
             href={`/contacts/${contact.id}`}
@@ -266,18 +260,22 @@ function CardContent({ card, handle }: { card: PipelineCard; handle?: ReactNode 
             {contact.name}
           </Link>
           {contact.company && (
-            <span className="truncate text-xs text-muted-foreground">{contact.company}</span>
+            <span className="truncate text-[0.8125rem] text-muted-foreground">
+              {contact.company}
+            </span>
           )}
         </div>
         {handle}
       </div>
       {followUpInDays !== null && (
-        <Badge
-          variant={followUpInDays < 0 ? "destructive" : "outline"}
-          className="self-start font-mono"
+        <span
+          className={cn(
+            "w-fit rounded-sm px-1.5 py-0.5 font-mono text-xs tabular-nums",
+            dueClass(followUpInDays),
+          )}
         >
           {formatDueIn(followUpInDays)}
-        </Badge>
+        </span>
       )}
     </Card>
   );

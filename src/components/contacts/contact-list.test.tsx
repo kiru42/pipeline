@@ -66,4 +66,16 @@ describe("ContactList", () => {
       "Relance",
     );
   });
+
+  it("indique le nombre de contacts dans le titre", () => {
+    render(<ContactList contacts={[marie, { ...marie, id: "2", name: "Alain Martin" }]} />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Contacts 2");
+  });
+
+  it("présente chaque contact comme une ligne Item, avec le badge coloré de son étape", () => {
+    render(<ContactList contacts={[{ ...marie, stage: "negociation" }]} />);
+    const link = screen.getByRole("link", { name: /Marie Dupont/ });
+    expect(link.getAttribute("data-slot")).toBe("item");
+    expect(screen.getByText("Négociation").className).toContain("bg-stage-negociation");
+  });
 });

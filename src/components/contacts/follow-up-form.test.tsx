@@ -62,6 +62,7 @@ describe("FollowUpForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Planifier" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe("La date de relance ne peut pas être dans le passé.");
+    expect(alert.getAttribute("data-slot")).toBe("field-error");
   });
 
   it.each(["signe", "perdu"] as const)(

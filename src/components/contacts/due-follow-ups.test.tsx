@@ -103,7 +103,7 @@ describe("DueFollowUps", () => {
       />,
     );
     const row = item("Alain Martin");
-    fireEvent.change(within(row).getByLabelText("Nouvelle relance"), {
+    fireEvent.change(within(row).getByLabelText("Prochaine relance"), {
       target: { value: "2026-11-28" },
     });
     fireEvent.click(within(row).getByRole("button", { name: "Fait" }));
@@ -129,5 +129,20 @@ describe("DueFollowUps", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fait" }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe("La nouvelle relance doit être postérieure à aujourd'hui.");
+    expect(alert.getAttribute("data-slot")).toBe("field-error");
+  });
+
+  it("rappelle l'étape et l'entreprise d'une relance qui n'est pas en retard", () => {
+    render(
+      <DueFollowUps followUps={[{ contact: { ...marie, company: "Acme" }, overdue: false }]} />,
+    );
+    expect(within(item("Marie Dupont")).getByText("Échange · Acme")).toBeDefined();
+  });
+
+  it("place le champ de prochaine relance et le bouton « Fait » sur la ligne de la relance", () => {
+    render(<DueFollowUps followUps={[{ contact: marie, overdue: false }]} />);
+    const row = item("Marie Dupont");
+    expect(within(row).getByLabelText("Prochaine relance").getAttribute("type")).toBe("date");
+    expect(within(row).getByRole("button", { name: "Fait" })).toBeDefined();
   });
 });

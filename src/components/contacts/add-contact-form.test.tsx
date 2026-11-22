@@ -31,5 +31,6 @@ describe("AddContactForm", () => {
     submit("   ");
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe("Le nom est obligatoire.");
+    expect(alert.getAttribute("data-slot")).toBe("field-error");
   });
 });

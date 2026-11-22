@@ -1,52 +1,54 @@
 import Link from "next/link";
+import { Empty, EmptyDescription, EmptyHeader } from "@/components/ui/empty";
 import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-} from "@/components/ui/empty";
-import { Badge } from "@/components/ui/badge";
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
 import { formatDay } from "@/lib/dates";
 import type { Contact } from "@/services/contact.service";
-import { getStage } from "@/services/stages";
+import { StageBadge } from "./stage-badge";
 
 export function ContactList({ contacts }: { contacts: Contact[] }) {
-  if (contacts.length === 0) {
-    return (
-      <Empty className="border border-border">
-        <EmptyHeader>
-          <EmptyDescription>Aucun contact pour l&apos;instant.</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    );
-  }
-
   return (
-    <ul className="divide-y divide-border rounded-xl border border-border">
-      {contacts.map((contact) => (
-        <li key={contact.id}>
-          <Link
-            href={`/contacts/${contact.id}`}
-            className="flex items-center justify-between gap-4 px-4 py-3 text-sm outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
-          >
-            <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="font-medium text-foreground">{contact.name}</span>
-              {contact.company && (
-                <span className="text-muted-foreground">{contact.company}</span>
-              )}
-            </span>
-            <span className="flex shrink-0 items-center gap-3">
-              {contact.nextFollowUp && (
-                <span className="text-muted-foreground">
-                  Relance le {formatDay(contact.nextFollowUp)}
-                </span>
-              )}
-              <Badge variant={getStage(contact.stage).closed ? "secondary" : "outline"}>
-                {getStage(contact.stage).label}
-              </Badge>
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <section className="flex flex-col gap-3" aria-labelledby="contacts-title">
+      <h1 id="contacts-title" className="text-2xl font-semibold tracking-tight text-foreground">
+        Contacts <span className="font-medium text-muted-foreground">{contacts.length}</span>
+      </h1>
+      {contacts.length === 0 ? (
+        <Empty className="border border-border bg-card">
+          <EmptyHeader>
+            <EmptyDescription>Aucun contact pour l&apos;instant.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <ItemGroup className="gap-0 overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+          {contacts.map((contact) => (
+            <div key={contact.id} role="listitem" className="border-b border-border last:border-b-0">
+              <Item
+                render={<Link href={`/contacts/${contact.id}`} />}
+                className="rounded-none hover:bg-muted focus-visible:bg-muted"
+              >
+                <ItemContent className="min-w-0">
+                  <ItemTitle>{contact.name}</ItemTitle>
+                  {contact.company && <ItemDescription>{contact.company}</ItemDescription>}
+                </ItemContent>
+                <ItemActions className="gap-3">
+                  {contact.nextFollowUp && (
+                    <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                      Relance le {formatDay(contact.nextFollowUp)}
+                    </span>
+                  )}
+                  <StageBadge stage={contact.stage} />
+                </ItemActions>
+              </Item>
+            </div>
+          ))}
+        </ItemGroup>
+      )}
+    </section>
   );
 }
