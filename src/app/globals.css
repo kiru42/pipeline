@@ -12,6 +12,7 @@
   --font-heading: var(--font-inter);
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
+  --color-success: var(--success);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -73,6 +74,7 @@
   /* Relances du jour */
   --highlight: oklch(0.95 0.07 85);
   --highlight-foreground: oklch(0.43 0.1 65);
+  --success: oklch(0.6 0.15 150);
   --chart-1: oklch(0.51 0.2 275);
   --chart-2: oklch(0.65 0.14 210);
   --chart-3: oklch(0.75 0.14 75);
@@ -110,6 +112,7 @@
   --ring: oklch(0.67 0.16 275);
   --highlight: oklch(0.32 0.07 75);
   --highlight-foreground: oklch(0.88 0.12 85);
+  --success: oklch(0.72 0.16 150);
   --chart-1: oklch(0.67 0.16 275);
   --chart-2: oklch(0.72 0.12 210);
   --chart-3: oklch(0.8 0.13 75);

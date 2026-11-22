@@ -7,6 +7,7 @@ import { ContactForm } from "@/components/contacts/contact-form";
 import { FollowUpForm } from "@/components/contacts/follow-up-form";
 import { StageSelector } from "@/components/contacts/stage-selector";
 import { getContactService } from "@/services/container";
+import { allowedNextStages } from "@/services/stages";
 import {
   changeStageAction,
   clearFollowUpAction,
@@ -28,6 +29,7 @@ async function ContactSheet({ params }: Pick<PageProps<"/contacts/[id]">, "param
       <StageSelector
         key={contact.stage}
         stage={contact.stage}
+        allowed={allowedNextStages(contact.stage)}
         action={changeStageAction.bind(null, contact.id)}
       />
       <FollowUpForm
@@ -43,9 +45,9 @@ async function ContactSheet({ params }: Pick<PageProps<"/contacts/[id]">, "param
 
 export default function ContactPage({ params }: PageProps<"/contacts/[id]">) {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-12">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-12">
       <Link
-        href="/"
+        href="/contacts"
         className="text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         ← Contacts
@@ -55,6 +57,6 @@ export default function ContactPage({ params }: PageProps<"/contacts/[id]">) {
       >
         <ContactSheet params={params} />
       </Suspense>
-    </main>
+    </div>
   );
 }

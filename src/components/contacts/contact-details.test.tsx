@@ -13,7 +13,7 @@ const marie: Contact = {
   email: "marie@acme.fr",
   phone: "06 12 34 56 78",
   note: "Rencontrée au salon",
-  stage: "nouveau",
+  stage: "premier-contact",
   nextFollowUp: null,
   lastContactedAt: null,
 };
@@ -45,13 +45,13 @@ describe("ContactDetails", () => {
   });
 
   it("affiche l'étape du contact", () => {
-    render(<ContactDetails contact={{ ...marie, stage: "rendez-vous" }} />);
-    expect(valueOf("Étape")).toBe("Rendez-vous");
+    render(<ContactDetails contact={{ ...marie, stage: "negociation" }} />);
+    expect(valueOf("Étape")).toBe("Négociation");
     expect(screen.queryByText("Clos")).toBeNull();
   });
 
   it.each([
-    ["gagne", "Gagné"],
+    ["signe", "Signé"],
     ["perdu", "Perdu"],
   ] as const)("présente un contact « %s » comme clos", (stage, label) => {
     render(<ContactDetails contact={{ ...marie, stage }} />);

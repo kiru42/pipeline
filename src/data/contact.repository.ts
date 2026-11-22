@@ -2,11 +2,11 @@ import type { Client, Row } from "@libsql/client";
 
 /** Étapes du pipeline, telles que stockées en base. */
 export type Stage =
-  | "nouveau"
-  | "contacte"
-  | "rendez-vous"
+  | "premier-contact"
+  | "echange"
   | "proposition"
-  | "gagne"
+  | "negociation"
+  | "signe"
   | "perdu";
 
 export type Contact = {
