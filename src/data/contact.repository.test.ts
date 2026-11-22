@@ -29,7 +29,7 @@ function contact(overrides: Partial<Contact> & Pick<Contact, "id" | "name">): Co
     email: null,
     phone: null,
     note: null,
-    stage: "nouveau",
+    stage: "premier-contact",
     nextFollowUp: null,
     lastContactedAt: null,
     ...overrides,
@@ -122,17 +122,17 @@ describe("ContactRepository (libsql)", () => {
   describe("étape", () => {
     it("enregistre l'étape à la création", async () => {
       const { client, repository } = await openRepository(":memory:");
-      await repository.create({ ...marie, stage: "contacte" });
-      expect((await repository.findById("1"))?.stage).toBe("contacte");
+      await repository.create({ ...marie, stage: "echange" });
+      expect((await repository.findById("1"))?.stage).toBe("echange");
       client.close();
     });
 
     it("enregistre un changement d'étape, visible dans la liste", async () => {
       const { client, repository } = await openRepository(":memory:");
-      await repository.create({ ...marie, stage: "contacte" });
-      await repository.update({ ...marie, stage: "rendez-vous" });
-      expect((await repository.findById("1"))?.stage).toBe("rendez-vous");
-      expect((await repository.list())[0].stage).toBe("rendez-vous");
+      await repository.create({ ...marie, stage: "echange" });
+      await repository.update({ ...marie, stage: "proposition" });
+      expect((await repository.findById("1"))?.stage).toBe("proposition");
+      expect((await repository.list())[0].stage).toBe("proposition");
       client.close();
     });
 
@@ -140,11 +140,11 @@ describe("ContactRepository (libsql)", () => {
       const url = tempDbUrl();
       const first = await openRepository(url);
       await first.repository.create(marie);
-      await first.repository.update({ ...marie, stage: "gagne" });
+      await first.repository.update({ ...marie, stage: "signe" });
       first.client.close();
 
       const second = await openRepository(url);
-      expect((await second.repository.findById("1"))?.stage).toBe("gagne");
+      expect((await second.repository.findById("1"))?.stage).toBe("signe");
       second.client.close();
     });
   });
@@ -223,6 +223,32 @@ describe("ContactRepository (libsql)", () => {
 
       const { client, repository } = await openRepository(url);
       expect(await repository.list()).toEqual([marie]);
+      client.close();
+    });
+
+    it("convertit les étapes d'avant le lot 7 vers les nouvelles étapes", async () => {
+      const url = tempDbUrl();
+      const legacy = createDbClient({ url });
+      await legacy.batch(
+        [
+          "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY)",
+          "INSERT INTO schema_migrations (version) VALUES (1), (2), (3), (4), (5)",
+          "CREATE TABLE contacts (id TEXT PRIMARY KEY, name TEXT NOT NULL, company TEXT, email TEXT, phone TEXT, note TEXT, stage TEXT NOT NULL DEFAULT 'nouveau', next_follow_up TEXT, last_contacted_at TEXT)",
+          "INSERT INTO contacts (id, name, stage) VALUES ('1', 'A', 'nouveau'), ('2', 'B', 'contacte'), ('3', 'C', 'rendez-vous'), ('4', 'D', 'proposition'), ('5', 'E', 'gagne'), ('6', 'F', 'perdu')",
+        ],
+        "write",
+      );
+      legacy.close();
+
+      const { client, repository } = await openRepository(url);
+      expect((await repository.list()).map((c) => [c.id, c.stage])).toEqual([
+        ["1", "premier-contact"],
+        ["2", "echange"],
+        ["3", "echange"],
+        ["4", "proposition"],
+        ["5", "signe"],
+        ["6", "perdu"],
+      ]);
       client.close();
     });
 

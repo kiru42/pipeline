@@ -1,5 +1,5 @@
 import type { Contact, ContactRepository } from "@/data/contact.repository";
-import { isClosedStage, isStage } from "./stages";
+import { STAGES, allowedNextStages, isClosedStage, isStage, type StageInfo } from "./stages";
 
 export type { Contact };
 export type { Stage, StageInfo } from "./stages";
@@ -32,6 +32,12 @@ export type FollowUpResult =
 /** Relance due : prévue aujourd'hui, ou en retard si sa date est dépassée. */
 export type DueFollowUp = { contact: Contact; overdue: boolean };
 
+/** Carte du Kanban : le contact et l'échéance de sa relance en jours (0 aujourd'hui, négatif en retard). */
+export type PipelineCard = { contact: Contact; followUpInDays: number | null };
+export type PipelineColumn = { stage: StageInfo; cards: PipelineCard[]; count: number };
+/** Kanban : une colonne par étape, dans l'ordre, et le nombre de contacts en cours (hors étapes closes). */
+export type Pipeline = { columns: PipelineColumn[]; inProgress: number };
+
 type Dependencies = {
   generateId: () => string;
   /** Date du jour, au format AAAA-MM-JJ. */
@@ -53,6 +59,13 @@ function isValidDay(value: string): boolean {
   );
 }
 
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+/** Nombre de jours de `from` à `to`, deux dates AAAA-MM-JJ valides. */
+function daysBetween(from: string, to: string): number {
+  return (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_IN_MS;
+}
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function optional(value: string): string | null {
@@ -71,6 +84,23 @@ export function createContactService(
 
     getContact(id: string): Promise<Contact | null> {
       return repository.findById(id);
+    },
+
+    async getPipeline(): Promise<Pipeline> {
+      const day = today();
+      const contacts = await repository.list();
+      const columns = STAGES.map((stage) => {
+        const cards = contacts
+          .filter((contact) => contact.stage === stage.id)
+          .map((contact) => ({
+            contact,
+            followUpInDays:
+              contact.nextFollowUp === null ? null : daysBetween(day, contact.nextFollowUp),
+          }));
+        return { stage, cards, count: cards.length };
+      });
+      const inProgress = contacts.filter((contact) => !isClosedStage(contact.stage)).length;
+      return { columns, inProgress };
     },
 
     /** Relances du jour d'abord, puis celles en retard (de la plus ancienne à la plus récente). */
@@ -97,7 +127,7 @@ export function createContactService(
         email: null,
         phone: null,
         note: null,
-        stage: "nouveau",
+        stage: "premier-contact",
         nextFollowUp: null,
         lastContactedAt: null,
       };
@@ -137,6 +167,15 @@ export function createContactService(
       const existing = await repository.findById(id);
       if (!existing) {
         return { ok: false, error: "Contact introuvable." };
+      }
+      if (isClosedStage(existing.stage)) {
+        return { ok: false, error: "Un contact signé ou perdu ne change plus d'étape." };
+      }
+      if (!allowedNextStages(existing.stage).includes(stage)) {
+        return {
+          ok: false,
+          error: "Un contact ne peut passer qu'à l'étape suivante ou à « Perdu ».",
+        };
       }
       const contact: Contact = {
         ...existing,

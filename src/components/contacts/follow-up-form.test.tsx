@@ -13,7 +13,7 @@ const marie: Contact = {
   email: null,
   phone: null,
   note: null,
-  stage: "contacte",
+  stage: "echange",
   nextFollowUp: null,
   lastContactedAt: null,
 };
@@ -64,7 +64,7 @@ describe("FollowUpForm", () => {
     expect(alert.textContent).toBe("La date de relance ne peut pas être dans le passé.");
   });
 
-  it.each(["gagne", "perdu"] as const)(
+  it.each(["signe", "perdu"] as const)(
     "indique qu'un contact clos (« %s ») ne peut pas avoir de relance",
     (stage) => {
       renderForm({ ...marie, stage });

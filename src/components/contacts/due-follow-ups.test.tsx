@@ -15,7 +15,7 @@ function contact(id: string, name: string, nextFollowUp: string): Contact {
     email: null,
     phone: null,
     note: null,
-    stage: "contacte",
+    stage: "echange",
     nextFollowUp,
     lastContactedAt: null,
   };

@@ -2,16 +2,18 @@
 
 import { startTransition, useActionState } from "react";
 import { Button } from "@/components/ui/button";
-import { STAGES, type Stage } from "@/services/stages";
+import { getStage, type Stage } from "@/services/stages";
 
 export type StageSelectorState = { error?: string };
 
 type Props = {
   stage: Stage;
+  /** Étapes permises par le service pour ce contact (vide pour un contact clos). */
+  allowed: readonly Stage[];
   action: (state: StageSelectorState, stage: string) => Promise<StageSelectorState>;
 };
 
-export function StageSelector({ stage, action }: Props) {
+export function StageSelector({ stage, allowed, action }: Props) {
   const [state, dispatch, pending] = useActionState(action, {});
 
   return (
@@ -19,27 +21,25 @@ export function StageSelector({ stage, action }: Props) {
       <h2 id="stage-selector-title" className="text-sm font-medium text-foreground">
         Changer d&apos;étape
       </h2>
-      <div className="flex flex-wrap gap-2">
-        {STAGES.map((candidate) => {
-          const current = candidate.id === stage;
-          return (
+      <p className="text-sm text-muted-foreground">Étape actuelle : {getStage(stage).label}</p>
+      {allowed.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Cette étape est définitive.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {allowed.map((candidate) => (
             <Button
-              key={candidate.id}
+              key={candidate}
               type="button"
               size="sm"
-              variant={current ? "default" : "outline"}
-              aria-pressed={current}
+              variant={candidate === "perdu" ? "outline" : "default"}
               disabled={pending}
-              onClick={() => {
-                if (current) return;
-                startTransition(() => dispatch(candidate.id));
-              }}
+              onClick={() => startTransition(() => dispatch(candidate))}
             >
-              {candidate.label}
+              {getStage(candidate).label}
             </Button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
       {state.error && (
         <p role="alert" className="text-sm text-destructive">
           {state.error}

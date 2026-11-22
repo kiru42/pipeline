@@ -13,7 +13,7 @@ const marie: Contact = {
   email: null,
   phone: null,
   note: null,
-  stage: "nouveau",
+  stage: "premier-contact",
   nextFollowUp: null,
   lastContactedAt: null,
 };
@@ -44,12 +44,12 @@ describe("ContactList", () => {
   it("affiche l'étape de chaque contact", () => {
     render(
       <ContactList
-        contacts={[marie, { ...marie, id: "2", name: "Alain Martin", stage: "rendez-vous" }]}
+        contacts={[marie, { ...marie, id: "2", name: "Alain Martin", stage: "negociation" }]}
       />,
     );
-    expect(screen.getByRole("link", { name: /Marie Dupont/ }).textContent).toContain("Nouveau");
+    expect(screen.getByRole("link", { name: /Marie Dupont/ }).textContent).toContain("Premier contact");
     expect(screen.getByRole("link", { name: /Alain Martin/ }).textContent).toContain(
-      "Rendez-vous",
+      "Négociation",
     );
   });
 

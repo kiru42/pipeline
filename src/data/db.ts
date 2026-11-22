@@ -42,6 +42,15 @@ const MIGRATIONS: { version: number; statements: string[] }[] = [
     version: 5,
     statements: ["ALTER TABLE contacts ADD COLUMN last_contacted_at TEXT"],
   },
+  {
+    // Lot 7 : nouvelles étapes du pipeline. « Rendez-vous » rejoint « Échange ».
+    version: 6,
+    statements: [
+      "UPDATE contacts SET stage = 'premier-contact' WHERE stage = 'nouveau'",
+      "UPDATE contacts SET stage = 'echange' WHERE stage IN ('contacte', 'rendez-vous')",
+      "UPDATE contacts SET stage = 'signe' WHERE stage = 'gagne'",
+    ],
+  },
 ];
 
 export async function migrate(client: Client): Promise<void> {

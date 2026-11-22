@@ -13,7 +13,7 @@ const marie: Contact = {
   email: "marie@acme.fr",
   phone: null,
   note: null,
-  stage: "nouveau",
+  stage: "premier-contact",
   nextFollowUp: null,
   lastContactedAt: null,
 };
